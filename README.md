@@ -1,5 +1,14 @@
 # Hyperfiddle starter app
 
+You need [Datomic pro](https://docs.datomic.com/pro/releases.html) (now free!) to run this demo.
+
+## Setup
+
+```
+./datomic_fixtures.sh # get Datomic and also install the mbrainz example data set
+./run_datomic.sh
+```
+
 1. `clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-1973"'`
 2. `clj -X:dev dev/-main :datomic-uri '"datomic:your-datomic-uri"'`
 3. connect a REPL and customize
