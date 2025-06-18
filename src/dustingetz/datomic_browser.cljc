@@ -98,7 +98,7 @@
               *db-stats* db-stats
               e/*bindings* (e/server (merge e/*bindings* {#'*conn* conn, #'*db* db, #'*db-stats* db-stats}))
               e/*exports*  (e/exports)
-              entity-browser/*server-pretty (e/server {} #_{datomic.query.EntityMap (e/fn [entity] (str "EntityMap" (pr-str entity)))})]
+              entity-browser/*server-pretty (e/server {datomic.query.EntityMap (fn [entity] (str "EntityMap" (pr-str entity)))})]
       (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
       (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser.css"}))
       (HfqlRoot sitemap entrypoint))))
