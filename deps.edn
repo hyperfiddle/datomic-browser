@@ -1,4 +1,4 @@
-{:deps    {com.hyperfiddle/hyperfiddle {:local/root "../hyperfiddle/"} ; todo use a jar
+{:deps    {com.hyperfiddle/hyperfiddle {:mvn/version "v0-alpha-SNAPSHOT"}
            com.datomic/peer {:mvn/version "1.0.7075"}
            ;; ring/ring {:mvn/version "1.14.1"} ; jetty 12, works but message payload size tunning API has changed, we need to upgrade it.
            ring/ring {:mvn/version "1.11.0"} ; to serve the app
