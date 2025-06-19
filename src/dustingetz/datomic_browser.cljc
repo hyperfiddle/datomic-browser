@@ -17,7 +17,6 @@
 (e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
 
 #?(:clj (defn attributes []
-          (prn 'attributes-search-string entity-browser/*search)
           (->> (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [*db*] :io-context ::attributes, :query-stats ::attributes})
                (dx/query-stats-as-meta)
                (hf-nav/navigable (fn [?e] (d/entity *db* ?e))))))
