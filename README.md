@@ -3,15 +3,17 @@
 ## What is it?
 
 This is a demo of a new and unique kind of structure navigator, designed to run from your existing at-work classpath – i.e. integrated into your existing business application. Leveraging existing business queries without having to write REST endpoints, and respecting your existing web middleware stack. It is business oriented, customizable, and fully programmable. With a low-code approach and integrated into your system, it doesn’t suffer from ReTool, AirTable or Notion’s abstraction ceilings.
- 
 
 
 
 ![Demo video](./docs/20250617_entity_browser.mp4)
 
-| Entity Navigation                                                                                             | Schema Explorer                                                                                         |
-| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| [![20250618 entity navigation](./docs/20250618_entity_navigation.png)](./docs/20250618_entity_navigation.png) | [![20250618 schema explorer](./docs/20250618_schema_explorer.png)](./docs/20250618_schema_explorer.png) |
+
+### Entity Navigation
+[![20250618 entity navigation](./docs/20250618_entity_navigation.png)](./docs/20250618_entity_navigation.png)
+
+### Schema Explorer
+[![20250618 schema explorer](./docs/20250618_schema_explorer.png)](./docs/20250618_schema_explorer.png)
 
 ## Use cases examples
 
