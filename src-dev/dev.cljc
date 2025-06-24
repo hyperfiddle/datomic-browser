@@ -1,6 +1,6 @@
 (ns dev
   (:require
-   electric-starter-app.main
+   [dustingetz.hyperfiddle-datomic-browser-demo :refer [hyperfiddle-demo-boot]]
 
    #?(:clj [shadow.cljs.devtools.api :as shadow-cljs-compiler])
    #?(:clj [shadow.cljs.devtools.server :as shadow-cljs-compiler-server])
@@ -11,44 +11,45 @@
    #?(:clj [ring.middleware.params :refer [wrap-params]])
    #?(:clj [ring.middleware.resource :refer [wrap-resource]])
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
-   #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])
+   #?(:clj [hyperfiddle.electric-ring-adapter3 :refer [wrap-electric-websocket]]) ; jetty 10+
+   ;; #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :refer [electric-jetty9-ws-install]]) ; jetty9
    ))
 
 (comment (-main)) ; repl entrypoint
 
 #?(:clj ; server entrypoint
    (defn -main [& args]
-     (log/info "Starting Electric compiler and server...")
+     (let [{:keys [datomic-uri]} (first args)]
+       (shadow-cljs-compiler-server/start!)
+       (shadow-cljs-compiler/watch :dev)
 
-     (shadow-cljs-compiler-server/start!)
-     (shadow-cljs-compiler/watch :dev)
-
-     (def server (ring/run-jetty
-                   (-> ; ring middlewares – applied bottom up:
-                     (fn [ring-request] ; 5. index page fallback
-                         (-> (ring-response/resource-response "index.dev.html" {:root "public/electric_starter_app"})
+       (def server (ring/run-jetty
+                     (-> ; ring middlewares – applied bottom up:
+                       (fn [ring-request] ; 5. index page fallback
+                         (-> (ring-response/resource-response "index.dev.html" {:root "public/hyperfiddle-demo"})
                            (ring-response/content-type "text/html")))
-                     (wrap-resource "public") ; 4. serve assets from disk.
-                     (wrap-content-type) ; 3. boilerplate – to server assets with correct mime/type.
-                     (electric-ring/wrap-electric-websocket ; 2. install Electric server.
-                       (fn [ring-request] (electric-starter-app.main/electric-boot ring-request))) ; boot server-side Electric process
-                     (wrap-params)) ; 1. boilerplate – parse request URL parameters.
-                   {:host "localhost", :port 8080, :join? false
-                    :configurator (fn [server] ; tune jetty
-                                    (org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
-                                      (.getHandler server)
-                                      (reify org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer$Configurator
-                                        (accept [_this _servletContext wsContainer]
-                                          (.setIdleTimeout wsContainer (java.time.Duration/ofSeconds 60))
-                                          (.setMaxBinaryMessageSize wsContainer (* 100 1024 1024)) ; typical compressed message size is of a few KBs. Set to 100M for demo.
-                                          (.setMaxTextMessageSize wsContainer (* 100 1024 1024))))))}))  ; 100M - for demo.
-     (log/info "👉 http://localhost:8080")))
+                       (wrap-resource "public") ; 4. serve assets from disk.
+                       (wrap-content-type) ; 3. boilerplate – to server assets with correct mime/type.
+                       (wrap-electric-websocket ; 2. install Electric server.
+                         (fn [ring-request] (hyperfiddle-demo-boot ring-request datomic-uri))) ; boot server-side Electric process
+                       (wrap-params)) ; 1. boilerplate – parse request URL parameters.
+                     {:host "localhost", :port 8080, :join? false
+                      :configurator (fn [server] ; tune jetty
+                                      #_(electric-jetty9-ws-install server "/" (fn [ring-request] (hyperfiddle-demo-boot ring-request datomic-uri)))
+                                      (org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
+                                        (.getHandler server)
+                                        (reify org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer$Configurator
+                                          (accept [_this _servletContext wsContainer]
+                                            (.setIdleTimeout wsContainer (java.time.Duration/ofSeconds 60)) ; default is 30
+                                            (.setMaxBinaryMessageSize wsContainer (* 100 1024 1024)) ; typical compressed message size is of a few KBs. Set to 100M for demo.
+                                            (.setMaxTextMessageSize wsContainer (* 100 1024 1024))))))})))  ; 100M - for demo.
+     (log/info "👉 http://0.0.0.0:8080")))
 
 (declare browser-process)
 #?(:cljs ; client entrypoint
    (defn ^:dev/after-load ^:export -main []
      (set! browser-process
-       ((electric-starter-app.main/electric-boot nil) ; boot client-side Electric process
+       ((hyperfiddle-demo-boot nil nil) ; boot client-side Electric process
         #(js/console.log "Reactor success:" %)
         #(js/console.error "Reactor failure:" %)))))
 
