@@ -23,6 +23,8 @@
    (defn -main [& args]
      (let [{:keys [datomic-uri http-port]} (first args)
            http-port (or http-port (next-available-port-from 8080))]
+       (assert (some? datomic-uri) "Missing `:datomic-uri`. See README.md")
+       (assert (string? datomic-uri) "Invalid `:datomic-uri`. See README.md")
 
        (shadow-cljs-compiler-server/start!)
        (shadow-cljs-compiler/watch :dev)
