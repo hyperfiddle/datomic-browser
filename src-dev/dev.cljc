@@ -17,9 +17,13 @@
 
 (comment (-main)) ; repl entrypoint
 
+#?(:clj (defn next-available-port-from [start] (first (filter #(try (doto (java.net.ServerSocket. %) .close) % (catch Exception _ (println (format "Port %s already taken" %)) nil)) (iterate inc start)))))
+
 #?(:clj ; server entrypoint
    (defn -main [& args]
-     (let [{:keys [datomic-uri]} (first args)]
+     (let [{:keys [datomic-uri http-port]} (first args)
+           http-port (or http-port (next-available-port-from 8080))]
+
        (shadow-cljs-compiler-server/start!)
        (shadow-cljs-compiler/watch :dev)
 
@@ -33,7 +37,7 @@
                        (wrap-electric-websocket ; 2. install Electric server.
                          (fn [ring-request] (hyperfiddle-demo-boot ring-request datomic-uri))) ; boot server-side Electric process
                        (wrap-params)) ; 1. boilerplate – parse request URL parameters.
-                     {:host "localhost", :port 8080, :join? false
+                     {:host "0.0.0.0", :port http-port, :join? false
                       :configurator (fn [server] ; tune jetty server – larger websocket messages, longer timeout – this is a temporary tweak
                                       #_(electric-jetty9-ws-install server "/" (fn [ring-request] (hyperfiddle-demo-boot ring-request datomic-uri)))
                                       (org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
@@ -42,8 +46,8 @@
                                           (accept [_this _servletContext wsContainer]
                                             (.setIdleTimeout wsContainer (java.time.Duration/ofSeconds 60)) ; default is 30
                                             (.setMaxBinaryMessageSize wsContainer (* 100 1024 1024)) ; typical compressed message size is of a few KBs. Set to 100M for demo.
-                                            (.setMaxTextMessageSize wsContainer (* 100 1024 1024))))))})))  ; 100M - for demo.
-     (log/info "👉 http://0.0.0.0:8080")))
+                                            (.setMaxTextMessageSize wsContainer (* 100 1024 1024))))))}))  ; 100M - for demo.
+       (log/info (format "👉 http://0.0.0.0:%s" http-port)))))
 
 (declare browser-process)
 #?(:cljs ; client entrypoint
