@@ -57,21 +57,21 @@ This is a demo of a new and unique kind of structure navigator, designed to run 
 
 ## Getting started
 
-Follow these steps to ensure your setup is correct before going further:
-
-1. Install demo data
 ```
 git clone git@gitlab.com:hyperfiddle/hyperfiddle-starter-app.git
 cd hyperfiddle-starter-app
+
+# Install demo data
 ./datomic_fixtures.sh # get Datomic (free) and example data
 ./run_datomic.sh
-```
-2. Run demo app. You’ll be asked to authenticate. The app will start on [localhost:8080](http://localhost:8080).
-```
+
+# Run demo app. You’ll be asked to authenticate.
 clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-1973"'
 
-# or at the REPL: user=> (dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})
+# or at the REPL:
+# user=> (dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})
 ```
+The app will start on [localhost:8080](http://localhost:8080).
 
 ## Customization
 
