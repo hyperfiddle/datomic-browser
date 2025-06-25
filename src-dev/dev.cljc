@@ -34,7 +34,7 @@
                          (fn [ring-request] (hyperfiddle-demo-boot ring-request datomic-uri))) ; boot server-side Electric process
                        (wrap-params)) ; 1. boilerplate – parse request URL parameters.
                      {:host "localhost", :port 8080, :join? false
-                      :configurator (fn [server] ; tune jetty
+                      :configurator (fn [server] ; tune jetty server – larger websocket messages, longer timeout – this is a temporary tweak
                                       #_(electric-jetty9-ws-install server "/" (fn [ring-request] (hyperfiddle-demo-boot ring-request datomic-uri)))
                                       (org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
                                         (.getHandler server)
