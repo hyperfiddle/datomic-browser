@@ -99,7 +99,7 @@ For now, integration is supported for Clojure Ring servers and ClojureScript cli
 3.  With [src/dev.cljc](./src/dev.cljc) as an example integration:
 	- Server
 		1. add the `wrap-electric-websocket` middleware to your ring middleware stack.
-		2. compare and adapt your jetty websocket configuration with the example config[^1].
+		2. compare and adapt your jetty websocket configuration with the example config.
 	- Client
 		1. copy over and adapt `(defn ^:dev/after-load -main [] ...)` and `(defn ^:dev/before-load stop! []...)` into your ClojureScript app `main` entrypoint. 
 		2. Look at [shadow-cljs.edn](./shadow-cljs.edn) > `:demo`, adapt you dev build accordingly. Ensure your build lists `:build-hooks [(hyperfiddle.electric.shadow-cljs.hooks3/reload-clj)]` and the `main` you’ve copied over will be called.
@@ -141,7 +141,3 @@ How long should it take one to understand and master a file with 1000 LOC? What 
 
 free on local dev machines, mandatory runtime login
 prod requires license, contact us, still working out the details
-
----
-
-[^1]: Tuning Jetty websocket defaults is temporary. It won’t be required in the future. If tuning jetty is a blocker to you, please get in touch with us so we can improve by understanding your constraints.
