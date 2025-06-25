@@ -15,4 +15,5 @@
     <logger name="io.undertow" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
     <logger name="org.jboss" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
     <logger name="org.xnio" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
+    <logger name="datomic" level="WARN" additivity="false"><appender-ref ref="STDOUT" /></logger>
 </configuration>
