@@ -1,11 +1,10 @@
 (ns dustingetz.hyperfiddle-datomic-browser-demo
   (:require
-   [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic]]
+   [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic datomic-browser-sitemap]]
 
    [hyperfiddle.electric3 :as e]
    [hyperfiddle.electric-dom3 :as dom]
-   [hyperfiddle.entrypoint :refer [Hyperfiddle]]
-   [hyperfiddle.sitemap :refer [#?(:clj read-sitemap)]]))
+   [hyperfiddle.entrypoint :refer [Hyperfiddle]]))
 
 (e/defn InjectAndRunHyperfiddle [ring-request datomic-uri]
   (e/client
@@ -16,7 +15,7 @@
           {`dustingetz.datomic-browser/DatomicBrowser
            (e/server (e/fn [] ; DI
                        (DatomicBrowser
-                         (e/server (read-sitemap "dustingetz/datomic_browser.edn" 'dustingetz.datomic-browser))
+                         (e/server datomic-browser-sitemap)
                          '[(dustingetz.datomic-browser/attributes)]
                          (e/server (ConnectDatomic datomic-uri)))))})))))
 

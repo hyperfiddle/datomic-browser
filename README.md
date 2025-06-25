@@ -75,18 +75,17 @@ The app will start on [localhost:8080](http://localhost:8080).
 
 ## Customization
 
-With the demo app running, look at and edit:
-1. [datomic-browser.edn](./src/dustingetz/datomic_browser.edn):
-	- it lists all queries – e.g. `attributes`, `attribute-detail`, etc.
+With the demo app running, look at and edit [datomic-browser.cljc](./src/dustingetz/datomic_browser.cljc). It contains:
+* a sitemap – i.e. a data representation of the application shape, describing:
+	- all queries – e.g. `attributes`, `attribute-detail`, etc.
 	- it defines query columns with:
 		- derived attributes – e.g. `attributes > (attribute-count %)`. `attribute-count` is a regular Clojure function.
 		- links to other queries – e.g. `attributes > :db/ident` has a link to `attribute-detail`.
 		- progressive enhancement – e.g. `attribute-entity-detail > :db/id` has a custom renderer.
-2. [datomic-browser.cljc](./src/dustingetz/datomic_browser.cljc). It contains:
-	- query definitions
-	- derived attributes definitions – e.g. `attribute-count` and `summarize-attr*`
-	- progressive enhancements and extensions
-	- dependency injection – e.g. setting up `*conn*` and `*db*`
+- query definitions
+- derived attributes definitions – e.g. `attribute-count` and `summarize-attr*`
+- progressive enhancements and extensions
+- dependency injection – e.g. setting up `*conn*` and `*db*`
 
 You can also run a Clojure REPL in your favourite editor – don’t forget the `:dev` deps alias – and run `dev/-main`.
 

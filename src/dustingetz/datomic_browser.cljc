@@ -1,9 +1,9 @@
-(ns dustingetz.datomic-browser ; in datomic-browser.jar
+(ns dustingetz.datomic-browser
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.nav0 :as hf-nav]
             [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
             [hyperfiddle.entity-browser4 :as entity-browser :refer [HfqlRoot]]
-            [hyperfiddle.sitemap :refer [Index]]
+            [hyperfiddle.sitemap :refer [Index #?(:clj parse-sitemap)]]
             [hyperfiddle.router4 :as r]
             [hyperfiddle.electric-dom3 :as dom]
             [dustingetz.loader :refer [Loader]]
@@ -11,6 +11,43 @@
             [clojure.string :as str]
             #?(:clj [datomic.api :as d])
             #?(:clj [dustingetz.datomic-contrib2 :as dx])))
+
+(def datomic-browser-sitemap
+  #?(:clj (parse-sitemap
+            '{attributes (hfql/props [(hfql/props :db/ident {::hfql/link    (attribute-detail :db/ident)
+                                                             ::hfql/Tooltip EntityTooltip})
+                                      (hfql/props (attribute-count %) {::hfql/label attribute-count})
+                                      (summarize-attr* %)
+                                      :db/doc]
+                           {::hfql/ColumnHeaderTooltip SummarizeDatomicAttribute
+                            ::hfql/select              (attribute-entity-detail %)})
+
+              (attribute-entity-detail :e) (hfql/props [(hfql/props :db/id {::hfql/Render EntityDbidCell})
+                                                        (hfql/props (attribute-count %) {::hfql/label attribute-count})
+                                                        (summarize-attr* %)]
+                                             {::hfql/Tooltip SemanticTooltip})
+
+              (attribute-detail :a) (hfql/props [(hfql/props :db/id {::hfql/link (entity-detail %v)})]
+                                      {::hfql/ColumnHeaderTooltip SummarizeDatomicAttribute
+                                       ::hfql/Tooltip             SemanticTooltip})
+
+              (tx-detail :tx) [(hfql/props :e {::hfql/link    (entity-detail :e)
+                                               ::hfql/Tooltip EntityTooltip})
+                               (hfql/props {:a :db/ident} {::hfql/link    (attribute-detail %v)
+                                                           ::hfql/Tooltip EntityTooltip})
+                               :v]
+
+              (entity-detail :e) (hfql/props [(hfql/props :db/id {::hfql/Render EntityDbidCell})] ; TODO want link and Tooltip instead
+                                   {::hfql/Tooltip SemanticTooltip})
+
+              (entity-history :e) [:e
+                                   (hfql/props {:a :db/ident} {::hfql/link    (attribute-detail %v)
+                                                               ::hfql/Tooltip EntityTooltip})
+                                   :v
+                                   (hfql/props :tx {::hfql/link    (tx-detail :tx)
+                                                    ::hfql/Tooltip EntityTooltip})
+                                   :added]})
+     :cljs {}))
 
 (e/declare ^:dynamic *conn*)
 (e/declare ^:dynamic *db*)
