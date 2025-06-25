@@ -69,6 +69,8 @@ cd hyperfiddle-starter-app
 2. Run demo app. You’ll be asked to authenticate. The app will start on [localhost:8080](http://localhost:8080).
 ```
 clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-1973"'
+
+# or at the REPL: user=> (dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})
 ```
 
 ## Customization
