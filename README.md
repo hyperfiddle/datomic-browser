@@ -4,6 +4,24 @@
 
 This is a demo of a new and unique kind of structure navigator, designed to run from your existing at-work classpath – i.e. integrated into your existing business application. Leveraging existing business queries without having to write REST endpoints, and respecting your existing web middleware stack. It is business oriented, customizable, and fully programmable. With a low-code approach and integrated into your system, it doesn’t suffer from ReTool, AirTable or Notion’s abstraction ceilings.
 
+## Getting started
+
+```
+git clone git@gitlab.com:hyperfiddle/hyperfiddle-starter-app.git
+cd hyperfiddle-starter-app
+
+# Install demo data
+./datomic_fixtures.sh # get Datomic (free) and example data
+./run_datomic.sh
+
+# Run demo app. You’ll be asked to authenticate.
+clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-1973"'
+
+# or at the REPL:
+# user=> (dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})
+```
+
+## Examples
 
 
 ![Demo video](./docs/20250617_entity_browser.mp4)
@@ -53,25 +71,6 @@ This is a demo of a new and unique kind of structure navigator, designed to run 
 	- Portal
 		- Standalone app, REPL-like workflow
 		- Remote system must push data to a known Portal instance
-
-
-## Getting started
-
-```
-git clone git@gitlab.com:hyperfiddle/hyperfiddle-starter-app.git
-cd hyperfiddle-starter-app
-
-# Install demo data
-./datomic_fixtures.sh # get Datomic (free) and example data
-./run_datomic.sh
-
-# Run demo app. You’ll be asked to authenticate.
-clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-1973"'
-
-# or at the REPL:
-# user=> (dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})
-```
-The app will start on [localhost:8080](http://localhost:8080).
 
 ## Customization
 
