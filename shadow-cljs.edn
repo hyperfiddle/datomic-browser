@@ -8,4 +8,6 @@
           {:target :browser
            :output-dir "resources/public/hyperfiddle-demo/js"
            :asset-path "/hyperfiddle-demo/js"
-           :modules {:main {:entries [prod] :init-fn prod/-main}}}}}
+           :modules {:main {:entries [prod] :init-fn prod/-main}}}}
+ :nrepl false ; not needed for the demo – less verbose boot
+ }
