@@ -1,6 +1,6 @@
 (ns dustingetz.hyperfiddle-datomic-browser-demo
   (:require
-   [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic datomic-browser-sitemap]]
+   [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]]
 
    [hyperfiddle.electric3 :as e]
    [hyperfiddle.electric-dom3 :as dom]
