@@ -97,6 +97,8 @@ Datomic support app features:
 
 "Hyper" means interconnected. "Fiddle" means play. Our mission is to build a new class of declarative enterprise GUI infrastructure for developing scalable, enterprise-class frontends that are deeply customizable, robust and secure.
 
+![](./docs/2024_hyperfiddle-crud-spreadsheet-explainer-sub.png)
+
 Technical goals:
 * identify and label the common structure shared between spreadsheets and CRUD apps
 * in a credible, enterprise-compatible way that scales to more sophisticated apps, not less
@@ -112,9 +114,8 @@ Economic goals:
 * free to use on local dev machines, mandatory runtime login (we are a business)
 * using in prod requires a license, contact us, still working out the details
 
-![](./docs/2024_hyperfiddle-crud-spreadsheet-explainer-sub.png)
-
-
 # Program your business, without drowning in complexity
 
-![](./docs/2024_logo-hyperfiddle-crud-spreadsheet-transparent.svg)
+<p align="center">
+  <img width="500" src="./docs/2024_logo-hyperfiddle-crud-spreadsheet-transparent.svg">
+</p>
