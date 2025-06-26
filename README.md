@@ -1,8 +1,10 @@
 # Hyperfiddle starter app
 
-## What is it?
+Build custom application GUIs for your pre-existing enterprise backends in minutes, not months.
 
-This is a demo of a new and unique kind of structure navigator, designed to run from your existing at-work classpath – i.e. integrated into your existing business application. Leveraging existing business queries without having to write REST endpoints, and respecting your existing web middleware stack. It is business oriented, customizable, and fully programmable. With a low-code approach and integrated into your system, it doesn’t suffer from ReTool, AirTable or Notion’s abstraction ceilings.
+Hyperfiddle is a programmable object navigator supporting your at-work enterprise objects in prod. For growth stage production support teams supporting JVM backends at logistics/ops heavy businesses.
+
+![Demo video](./docs/20250617_entity_browser.mp4)
 
 ## Getting started
 
@@ -20,122 +22,99 @@ clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-19
 # or at the REPL:
 # user=> (dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})
 ```
+## Features
 
-## Examples
+* prod-ready, web-based
+* enterprise objects reachable through direct classpath linking
+* streamlined navigator UX with table-pickers and powerful grids
+* scalable UI infrastructure (powered by [Electric Clojure](https://github.com/hyperfiddle/electric))
+* programmable framework, not just a static developer tool
+* programmable queries, user controls all queries (direct classpath linking)
+* programmable grids, forms, hyperlinks and routing through declarative hypermedia DSL
+* full progressive enhancement with web technologies (HTML, CSS, frontend, backend)
+* same security model as production web apps
+* **NO REST APIs.** Never write an internal tool REST API ever again!
 
+## Direct classpath linking to integrate any data source or native object
 
-![Demo video](./docs/20250617_entity_browser.mp4)
+* **Not just Datomic:** navigate SQL or any backend data source via classpath function calls
+* **Not just databases:** navigate clojure namespaces, file system, internal service state – literally any object
+* **Not just Clojure:** call Java functions via classpath linking
+* **Not just "data":** navigate **actual Java objects** via method call navigation (!)
 
+**FAQ: What's the difference between an object navigator and a data browser?** Hyperfiddle is about objects, not data. Objects come with functions and methods, they aren't serializable, you navigate hyperlink graph structures rather than browse freeform nested structures, and you want to do this with the native object datatype, not derived record struct projections. Objects are what the world is made of. And Hyperfiddle is how you reach them.
 
-### Entity Navigation
+## a foundation for next-gen enterprise apps
+ 
+* (coming soon) hypermedia DSL: links, forms, buttons
+* (coming soon) editable enterprise datagrids
+* (coming soon) enterprise forms, pickers, wizards
+* (coming soon) CQRS command/query architecture
+* (coming soon) microservice classpath connectors
+* (coming soon) audit and log all server effects and classpath interop
+* (coming soon) enterprise security middleware
+* (coming soon) Python classpaths
+
+## Example app: Datomic prod support tool
+
+(Hyperfiddle does NOT depend on Datomic. This Datomic example is a *userland* Hyperfiddle app!)
+
 [![20250618 entity navigation](./docs/20250618_entity_navigation.png)](./docs/20250618_entity_navigation.png)
 
-### Schema Explorer
+Datomic support app features:
+* entity navigation, reverse attributes link
+* query diagnostics (io-context etc)
+* large databases, large resultsets (virtual scroll)### Entity Navigation
+* auto-kill slow queries
+* classpath-connected, embed in your ring service (jetty, httpkit)
+* custom queries (link your clojure classpath)### Schema Explorer
+* filtering and sort
+* column selection and inference
+* derived fields and attributes## Use cases examples
+* schema browser with attribute counts
+* entity tooltips on all IDs* Microservice state observability in production
+* entity history link* Business-level database explorer
+* easy to integrate* Integrated customer support UIs
+* enterprise SSO
+
 [![20250618 schema explorer](./docs/20250618_schema_explorer.png)](./docs/20250618_schema_explorer.png)
 
-## Use cases examples
+## More demos and project ideas
 
+* [jGit repo explorer]()
+* [clojure namespace and var directory](https://electric.hyperfiddle.net/dustingetz.object-browser-demo3!ObjectBrowserDemo3/(dustingetz.object-browser-demo3!clojure-all-ns))
+* SQL browser (todo host demo)
+* [jvm process thread inspector](https://electric.hyperfiddle.net/dustingetz.object-browser-demo3!ObjectBrowserDemo3/(dustingetz.object-browser-demo3!thread-mx))
+* [java class inspector](https://electric.hyperfiddle.net/dustingetz.object-browser-demo3!ObjectBrowserDemo3/(dustingetz.object-browser-demo3!class-view,java.lang.management.ThreadMXBean))
+* [file/folder explorer](https://electric.hyperfiddle.net/dustingetz.object-browser-demo3!ObjectBrowserDemo3/(clojure.java.io!file,'.!'))
+* jar viewer
+* Runtime code observability of legacy systems for maintainers
 * Microservice state observability in production
 * Business-level database explorer
 * Integrated customer support UIs
 
-## Features
+## Where are we going with this
 
-- programmable and extensible – you control all queries
-- navigate any object, not just Datomic (just a demo)
-- **leverage existing at-work classpath**
-	- enrich your objects with derived fields and custom logic
-    - embed it in your at-work server, call existing business queries
-	- same security model as your production web app – plugs-in behind your middlewares
-- No REST API
-- progressive enhancement with web technologies (e.g. css)
-- filtering, auto pagination, sorting
-- deep linking
+"Hyper" means interconnected. "Fiddle" means play. Our mission is to build a new class of declarative enterprise GUI infrastructure for developing scalable, enterprise-class frontends that are deeply customizable, robust and secure.
 
-## Comparison to other tools
+Technical goals:
+* identify and label the common structure shared between spreadsheets and CRUD apps
+* in a credible, enterprise-compatible way that scales to more sophisticated apps, not less
+* leverage this structure as the foundation for or substrate of a next-gen application framework or engine (think Unity for enterprise apps)
+* a foundation for end user programming as a higher order, creative medium
+* zero-code data connectivity via the Electric protocol (Hyperfiddle : Electric :: Netscape : HTTP)
+* **never write a REST integration ever again**
 
-- Integrated UIs for business data – devs must write an API
-	- Ag-Grid
-		- Limited progressive enhancement – heavily optimized for grids
-		- Biased towards client-side data – e.g. [No global search for remote data](https://www.ag-grid.com/react-data-grid/filter-quick/#server-side-data) 
-	- Handsontable, Slickgrid
-		- Spreadsheet editor model – immediate abstraction ceiling
-		- Heavy integration boilerplate
-- Devtools – can’t be integrated into an existing business app
-	- REBL/Morse, Reveal
-		- Heavy java client, no progressive enhancement
-		- Remote system must expose a dedicated socket
-	- Dataspex
-		- Browser extension (users must install it) or standalone web app
-		- Dedicated socket
-	- Portal
-		- Standalone app, REPL-like workflow
-		- Remote system must push data to a known Portal instance
+Economic goals:
+* find and develop a market, economic model, and global at-scale distribution strategy which is directly and immediately aligned with investing the proceeds into foundational programming abstractions, so that we can all benefit from better software, and build it less painfully
 
-## Customization
+## License
+* free to use on local dev machines, mandatory runtime login (we are a business)
+* using in prod requires a license, contact us, still working out the details
 
-With the demo app running, look at and edit [datomic-browser.cljc](./src/dustingetz/datomic_browser.cljc). It contains:
-* a sitemap – i.e. a data representation of the application shape, describing:
-	- all queries – e.g. `attributes`, `attribute-detail`, etc.
-	- it defines query columns with:
-		- derived attributes – e.g. `attributes > (attribute-count %)`. `attribute-count` is a regular Clojure function.
-		- links to other queries – e.g. `attributes > :db/ident` has a link to `attribute-detail`.
-		- progressive enhancement – e.g. `attribute-entity-detail > :db/id` has a custom renderer.
-- query definitions
-- derived attributes definitions – e.g. `attribute-count` and `summarize-attr*`
-- progressive enhancements and extensions
-- dependency injection – e.g. setting up `*conn*` and `*db*`
-
-You can also run a Clojure REPL in your favourite editor – don’t forget the `:dev` deps alias – and run `dev/-main`.
-
-## Integration
-
-For now, integration is supported for Clojure Ring servers and ClojureScript clients built with Shadow-cljs.
-
-1. Copy the [src/dustingetz](./src/dustingetz) folder into your app’s `src`.
-2. Copy dependencies over from [deps.edn](./deps.edn) into your Clojure Ring server app.
-3.  With [src/dev.cljc](./src/dev.cljc) as an example integration:
-	- Server
-		1. add the `wrap-electric-websocket` middleware to your ring middleware stack.
-		2. compare and adapt your jetty websocket configuration with the example config.
-	- Client
-		1. copy over and adapt `(defn ^:dev/after-load -main [] ...)` and `(defn ^:dev/before-load stop! []...)` into your ClojureScript app `main` entrypoint. 
-		2. Look at [shadow-cljs.edn](./shadow-cljs.edn) > `:demo`, adapt you dev build accordingly. Ensure your build lists `:build-hooks [(hyperfiddle.electric.shadow-cljs.hooks3/reload-clj)]` and the `main` you’ve copied over will be called.
+![](./docs/2024_hyperfiddle-crud-spreadsheet-explainer-sub.png)
 
 
+# Program your business, without drowning in complexity
 
-<!--
-## Mission
-
-Mission (money)
-Retool, Airtable, Notion
-
-Business goals
-
-
-Technical goals
-identify and label the common structure shared between spreadsheets and crud apps in a credible, enterprise-compatible way that scales to more sophisticated apps, not less
-leverage this structure as the foundation for or substrate of a next-gen application framework or engine (think Unity for enterprise apps) – turning programming into a higher order, creative medium
-
-
-
-Architecture
-IO engine (Electric Clojure) – pure functional structured concurrency framework
-
-Prod (requires paid license)
-
-License
-free on local dev machines, mandatory runtime login
-prod requires license, contact us, still working out the details
-
-Product hypotheses and experiments
-Runtime code observability of legacy systems for maintainers
-How long should it take one to understand and master a file with 1000 LOC? What if there aren't tests?
-
-
--->
-
-## License – WIP
-
-free on local dev machines, mandatory runtime login
-prod requires license, contact us, still working out the details
+![](./docs/2024_logo-hyperfiddle-crud-spreadsheet-transparent.svg)
