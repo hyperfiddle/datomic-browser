@@ -1,14 +1,14 @@
 # Hyperfiddle starter app
 
-Build custom application GUIs for your pre-existing enterprise backends in minutes, not months.
+Hyperfiddle is a **programmable object navigator** supporting your at-work enterprise objects in prod. Use this foundation to build **high fidelity enterprise GUIs for your pre-existing enterprise backends**, such as enterprise workbench apps, customer support tools, microservice internal state observability and debugging tools, internal control plane apps, interactive dashboards.
 
-Hyperfiddle is a programmable object navigator supporting your at-work enterprise objects in prod. For growth stage production support teams supporting JVM backends at logistics/ops heavy businesses.
+Stop treating your ops teams badly due to eng resource constraints, as the beating heart of the business they should be your primary customer. Deliver **premium quality internal frontends** faster, without wasting scarce dev resources debugging glue code. 
 
 ![Demo video](./docs/20250617_entity_browser.mp4)
 
 ## Features
 
-* prod-ready, web-based
+* prod-ready, built on standard web technologies
 * enterprise objects reachable through direct classpath linking
 * streamlined navigator UX with table-pickers and powerful grids
 * scalable UI infrastructure (powered by [Electric Clojure](https://github.com/hyperfiddle/electric))
@@ -26,7 +26,7 @@ Hyperfiddle is a programmable object navigator supporting your at-work enterpris
 * **Not just Clojure:** call Java functions via classpath linking
 * **Not just "data":** navigate **actual Java objects** via method call navigation (!)
 
-**FAQ: What's the difference between an object navigator and a data browser?** Hyperfiddle is about objects, not data. Objects come with functions and methods, they aren't serializable, you navigate hyperlink graph structures rather than browse freeform nested structures, and you want to do this with the native object datatype, not derived record struct projections. Objects are what the world is made of. And Hyperfiddle is how you reach them.
+**FAQ: What's the difference between an object navigator and a data browser?** Hyperfiddle is about objects, not data. Objects come with functions and methods, they aren't serializable, you navigate hyperlink graph structures rather than browse freeform nested structures, and you want to do this without impedance, using the actual native object datatype, not derived projections or data mappers. Objects are what the world is made of. And Hyperfiddle is how you reach them.
 
 ## a foundation for next-gen enterprise apps
  
@@ -48,18 +48,18 @@ Hyperfiddle is a programmable object navigator supporting your at-work enterpris
 Datomic support app features:
 * entity navigation, reverse attributes link
 * query diagnostics (io-context etc)
-* large databases, large resultsets (virtual scroll)### Entity Navigation
-* auto-kill slow queries
-* classpath-connected, embed in your ring service (jetty, httpkit)
-* custom queries (link your clojure classpath)### Schema Explorer
+* monitor and kill slow queries from very large databases
+* classpath connected for custom queries (direct classpath linking to any function)
+* fluid virtual scroll over 50k record collections
+* built-in schema explorer with attribute counts
 * filtering and sort
 * column selection and inference
-* derived fields and attributes## Use cases examples
+* derived fields and attributes
 * schema browser with attribute counts
-* entity tooltips on all IDs* Microservice state observability in production
+* entity tooltips on all IDs
 * entity history link* Business-level database explorer
-* easy to integrate* Integrated customer support UIs
-* enterprise SSO
+* easy to integrate ring middleware - embed in your at-work httpkit or jetty services
+* enterprise SSO (contact us)
 
 [![20250618 schema explorer](./docs/20250618_schema_explorer.png)](./docs/20250618_schema_explorer.png)
 
@@ -71,15 +71,11 @@ Datomic support app features:
 * [jvm process thread inspector](https://electric.hyperfiddle.net/dustingetz.object-browser-demo3!ObjectBrowserDemo3/(dustingetz.object-browser-demo3!thread-mx))
 * [java class inspector](https://electric.hyperfiddle.net/dustingetz.object-browser-demo3!ObjectBrowserDemo3/(dustingetz.object-browser-demo3!class-view,java.lang.management.ThreadMXBean))
 * [file/folder explorer](https://electric.hyperfiddle.net/dustingetz.object-browser-demo3!ObjectBrowserDemo3/(clojure.java.io!file,'.!'))
-* jar viewer
-* Runtime code observability of legacy systems for maintainers
-* Microservice state observability in production
-* Business-level database explorer
-* Integrated customer support UIs
+* jar file viewer
 
 ## Where are we going with this
 
-"Hyper" means interconnected. "Fiddle" means play. Our mission is to build a new class of declarative enterprise GUI infrastructure for developing scalable, enterprise-class frontends that are deeply customizable, robust and secure.
+"Hyper" means interconnected. "Fiddle" means play. Hyperfiddle is an ongoing, decade-long investment in developing a new class of declarative application infrastructure for building scalable, enterprise-class frontends that are deeply customizable, robust and secure. Our mission is to **collapse to zero** the cost of business process UI development, for a huge range of apps from enterprise applications to throwaway internal tools.
 
 ![](./docs/2024_hyperfiddle-crud-spreadsheet-explainer-sub.png)
 
@@ -94,9 +90,14 @@ Technical goals:
 Economic goals:
 * find and develop a market, economic model, and global at-scale distribution strategy which is directly and immediately aligned with investing the proceeds into foundational programming abstractions, so that we can all benefit from better software, and build it less painfully
 
+## Social media
+
+* https://x.com/dustingetz
+
 ## License
 * free to use on local dev machines, mandatory runtime login (we are a business)
-* using in prod requires a license, contact us, still working out the details
+* using in prod requires a license, contact us
+* still working out the details
 
 ## Getting started
 
