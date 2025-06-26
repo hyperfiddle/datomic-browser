@@ -105,7 +105,8 @@ git clone git@gitlab.com:hyperfiddle/hyperfiddle-starter-app.git
 cd hyperfiddle-starter-app
 
 # Install demo data
-./datomic_fixtures.sh # get Datomic (free) and example data
+java -version              # we use openjdk version "23.0.2"
+./datomic_fixtures.sh      # get Datomic (free) and example data
 ./run_datomic.sh
 
 # Run demo app. You’ll be asked to authenticate.
