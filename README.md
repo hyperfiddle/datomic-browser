@@ -6,22 +6,6 @@ Hyperfiddle is a programmable object navigator supporting your at-work enterpris
 
 ![Demo video](./docs/20250617_entity_browser.mp4)
 
-## Getting started
-
-```
-git clone git@gitlab.com:hyperfiddle/hyperfiddle-starter-app.git
-cd hyperfiddle-starter-app
-
-# Install demo data
-./datomic_fixtures.sh # get Datomic (free) and example data
-./run_datomic.sh
-
-# Run demo app. You’ll be asked to authenticate.
-clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-1973"'
-
-# or at the REPL:
-# user=> (dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})
-```
 ## Features
 
 * prod-ready, web-based
@@ -113,6 +97,24 @@ Economic goals:
 ## License
 * free to use on local dev machines, mandatory runtime login (we are a business)
 * using in prod requires a license, contact us, still working out the details
+
+## Getting started
+
+```
+git clone git@gitlab.com:hyperfiddle/hyperfiddle-starter-app.git
+cd hyperfiddle-starter-app
+
+# Install demo data
+./datomic_fixtures.sh # get Datomic (free) and example data
+./run_datomic.sh
+
+# Run demo app. You’ll be asked to authenticate.
+# First via Clojure CLI to see it working. https://clojure.org/guides/install_clojure
+clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-1973"'
+
+# Now jack in to REPL, :dev alias:
+user=> (dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})
+```
 
 # Program your business, without drowning in complexity
 
