@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 nc -z localhost 4334 2>/dev/null && { echo "Port 4334 already in use"; exit 1; } || true
 
