@@ -17,7 +17,7 @@ Stop treating your ops teams badly due to eng resource constraints, as the beati
 * programmable grids, forms, hyperlinks and routing through declarative hypermedia DSL
 * full progressive enhancement with web technologies (HTML, CSS, frontend, backend)
 * same security model as production web apps
-* **NO REST APIs.** Never write an internal tool REST API ever again!
+* **NO REST APIs.** Never write an internal tool REST API ever again! (State distribution powered by [Electric Clojure and the Electric protocol](https://github.com/hyperfiddle/electric))
 
 ## Direct classpath linking to integrate any data source or native object
 
@@ -87,9 +87,9 @@ Use cases: enterprise workbench apps, customer support tools, microservice inter
 
 "Hyper" means interconnected. "Fiddle" means play. Our vision for Hyperfiddle is to develop an **end-user hypermedia programming environment** that reaches all of your at-work cloud objects without writing network glue code. Our mission is to **collapse to zero** the cost of business process frontend development, for a huge range of apps from enterprise applications to throwaway tools.
 
-"Civilization advances by extending the number of operations we can perform without thinking about them.”
+> "Civilization advances by extending the number of operations we can perform without thinking about them.”
 
-**FAQ: Does it have AI?** Yes, we are starting to experiment with agents and it's going to be every bit as amazing as you think. I can say that we internally view Electric as a protocol, Hyperfiddle is intended to be a network, our secret mission is to build Skynet. "An Electric endpoint in every service"
+**FAQ: Does it have AI?** Yes, we are starting to experiment with agents and it's going to be every bit as amazing as you imagine.
 
 ## Project goals
 
@@ -105,6 +105,8 @@ Technical goals:
 
 Economic goals:
 * find and develop a market, economic model, and global at-scale distribution strategy which is directly and immediately aligned with investing the proceeds into foundational programming abstractions, so that we can all benefit from better software, and build it less painfully
+
+> "If a system is to serve the creative spirit, it must be entirely comprehensible to a single individual. Human potential manifests itself in individuals." — Dan Ingalls, Design Principles behind Smalltalk
 
 ## Social media
 
