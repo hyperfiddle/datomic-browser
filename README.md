@@ -91,12 +91,18 @@ Our mission is to **collapse to zero** the cost of business process frontend dev
 
 "Civilization advances by extending the number of operations we can perform without thinking about them.”
 
+**FAQ: Does it have AI?** Yes, we are starting to experiment with agents and it's going to be every bit as amazing as you think. I can say that we internally view Electric as a protocol, Hyperfiddle is intended to be a network, our secret mission is to build Skynet. "An Electric endpoint in every service"
+
+## Project goals
+
+Hyperfiddle is an ongoing, decade-long R&D investment in bringing to market a new class of foundation GUI infrastructure for business frontends.
+
 Technical goals:
 * identify and label the common structure shared between spreadsheets and CRUD apps
 * in a credible, enterprise-compatible way that scales to more sophisticated apps, not less
 * leverage this structure as the foundation for or substrate of a next-gen application framework or engine (think Unity for enterprise apps)
 * a foundation for end user programming as a higher order, creative medium
-* zero-code data connectivity via the Electric protocol (Hyperfiddle : Electric :: Netscape : HTTP)
+* zero-code data connectivity via the Electric protocol (c.f. Netscape and HTTP -- Netscape is the original declarative IO runtime for HTML apps)
 * **never write a REST integration ever again**
 
 Economic goals:
