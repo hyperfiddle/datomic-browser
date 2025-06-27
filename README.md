@@ -32,7 +32,7 @@ Stop treating your ops teams badly due to eng resource constraints, as the beati
 
 (Hyperfiddle does NOT depend on Datomic. This Datomic example is a *userland* Hyperfiddle app!)
 
-[![20250618 entity navigation](./docs/20250618_entity_navigation.png)](./docs/20250618_entity_navigation.png)
+[![20250627_datomic_entity_browser.png](./docs/20250627_datomic_entity_browser.png)](./docs/20250627_datomic_entity_browser.png)
 
 Datomic support app features:
 * entity navigation, reverse attributes link
@@ -50,7 +50,7 @@ Datomic support app features:
 * easy to integrate ring middleware - embed in your at-work httpkit or jetty services
 * enterprise SSO (contact us)
 
-[![20250618 schema explorer](./docs/20250618_schema_explorer.png)](./docs/20250618_schema_explorer.png)
+[![20250627_datomic_schema_app.png](./docs/20250627_datomic_schema_app.png)](./docs/20250627_datomic_schema_app.png)
 
 ## Example app: jGit history search GUI
 
