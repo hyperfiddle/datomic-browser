@@ -85,9 +85,7 @@ Use cases: enterprise workbench apps, customer support tools, microservice inter
 
 ## Where are we going with this
 
-"Hyper" means interconnected. "Fiddle" means play. Our vision for Hyperfiddle is to develop an end-user hypermedia programming environment that reaches all of your at-work cloud objects without writing network glue code.
-
-Our mission is to **collapse to zero** the cost of business process frontend development, for a huge range of apps from enterprise applications to throwaway tools.
+"Hyper" means interconnected. "Fiddle" means play. Our vision for Hyperfiddle is to develop an **end-user hypermedia programming environment** that reaches all of your at-work cloud objects without writing network glue code. Our mission is to **collapse to zero** the cost of business process frontend development, for a huge range of apps from enterprise applications to throwaway tools.
 
 "Civilization advances by extending the number of operations we can perform without thinking about them.”
 
