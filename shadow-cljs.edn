@@ -8,6 +8,7 @@
           {:target :browser
            :output-dir "resources/public/hyperfiddle-starter-app/js"
            :asset-path "/hyperfiddle-starter-app/js"
-           :modules {:main {:entries [prod] :init-fn prod/-main}}}}
+           :modules {:main {:entries [prod] :init-fn prod/-main}}
+           :module-hash-names true}}
  :nrepl false ; not needed for the demo – less verbose boot
  }

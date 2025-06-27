@@ -30,7 +30,7 @@ application classpath to be available"
          :verbose verbose,
          :config-merge
          [{:compiler-options {:optimizations (if optimize :advanced :simple)}
-             :closure-defines  {'hyperfiddle.electric-client3/ELECTRIC_USER_VERSION version}}]})
+           :closure-defines  {'hyperfiddle.electric-client3/ELECTRIC_USER_VERSION version}}]})
       shadow-status (assert (= shadow-status :done) "shadow-api/release error")) ; fail build on error
   (shadow-server/stop!)
   (log/info "client built"))
