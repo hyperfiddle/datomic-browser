@@ -1,8 +1,8 @@
 # Hyperfiddle starter app
 
-Hyperfiddle is a **programmable object navigator** supporting your at-work enterprise objects in prod. Use this foundation to build **high fidelity enterprise GUIs for your pre-existing enterprise backends**, such as enterprise workbench apps, customer support tools, microservice internal state observability and debugging tools, internal control plane apps, interactive dashboards.
+For production support teams at operationally heavy businesses, Hyperfiddle is a **programmable object navigator** that reaches all your at-work enterprise objects in prod.
 
-Stop treating your ops teams badly due to eng resource constraints, as the beating heart of the business they should be your primary customer. Deliver **premium quality internal frontends** faster, without wasting scarce dev resources debugging glue code. 
+Stop treating your ops teams badly due to eng resource constraints, as the beating heart of the business they should be your primary customer. Deliver **premium quality internal frontends faster**, without needing specialist frontend framework expertise.
 
 ![Demo video](./docs/20250617_entity_browser.mp4)
 
@@ -28,17 +28,6 @@ Stop treating your ops teams badly due to eng resource constraints, as the beati
 
 **FAQ: What's the difference between an object navigator and a data browser?** Hyperfiddle is about objects, not data. Objects come with functions and methods, they aren't serializable, you navigate hyperlink graph structures rather than browse freeform nested structures, and you want to do this without impedance, using the actual native object datatype, not derived projections or data mappers. Objects are what the world is made of. And Hyperfiddle is how you reach them.
 
-## a foundation for next-gen enterprise apps
- 
-* (coming soon) hypermedia DSL: links, forms, buttons
-* (coming soon) editable enterprise datagrids
-* (coming soon) enterprise forms, pickers, wizards
-* (coming soon) CQRS command/query architecture
-* (coming soon) microservice classpath connectors
-* (coming soon) audit and log all server effects and classpath interop
-* (coming soon) enterprise security middleware
-* (coming soon) Python classpaths
-
 ## Example app: Datomic prod support tool
 
 (Hyperfiddle does NOT depend on Datomic. This Datomic example is a *userland* Hyperfiddle app!)
@@ -63,7 +52,11 @@ Datomic support app features:
 
 [![20250618 schema explorer](./docs/20250618_schema_explorer.png)](./docs/20250618_schema_explorer.png)
 
-## More demos and project ideas
+## Example app: jGit history search GUI
+
+[![2024_jgit_history_gui.png](./docs/2024_jgit_history_gui.png)](./docs/2024_jgit_history_gui.png)
+
+## More live examples
 
 * [jGit repo explorer]()
 * [clojure namespace and var directory](https://electric.hyperfiddle.net/dustingetz.object-browser-demo3!ObjectBrowserDemo3/(dustingetz.object-browser-demo3!clojure-all-ns))
@@ -73,11 +66,30 @@ Datomic support app features:
 * [file/folder explorer](https://electric.hyperfiddle.net/dustingetz.object-browser-demo3!ObjectBrowserDemo3/(clojure.java.io!file,'.!'))
 * jar file viewer
 
+## a foundation for next-gen enterprise apps
+
+Use this foundation to build scalable, enterprise-class frontends that are deeply customizable, robust and secure.
+
+[![2024_hyperfiddle-crud-spreadsheet-explainer-sub.png](./docs/2024_hyperfiddle-crud-spreadsheet-explainer-sub.png)](./docs/2024_hyperfiddle-crud-spreadsheet-explainer-sub.png)
+
+* (coming soon) hypermedia DSL: links, forms, buttons
+* (coming soon) editable enterprise datagrids
+* (coming soon) enterprise forms, pickers, wizards
+* (coming soon) CQRS command/query architecture
+* (coming soon) microservice classpath connectors
+* (coming soon) audit and log all server effects and classpath interop
+* (coming soon) enterprise security middleware
+* (coming soon) Python classpaths
+
+Use cases: enterprise workbench apps, customer support tools, microservice internal state observability and debugging tools, internal control plane apps, interactive dashboards.
+
 ## Where are we going with this
 
-"Hyper" means interconnected. "Fiddle" means play. Hyperfiddle is an ongoing, decade-long investment in developing a new class of declarative application infrastructure for building scalable, enterprise-class frontends that are deeply customizable, robust and secure. Our mission is to **collapse to zero** the cost of business process UI development, for a huge range of apps from enterprise applications to throwaway internal tools.
+"Hyper" means interconnected. "Fiddle" means play. Our vision for Hyperfiddle is to develop an end-user hypermedia programming environment that reaches all of your at-work cloud objects without writing network glue code.
 
-![](./docs/2024_hyperfiddle-crud-spreadsheet-explainer-sub.png)
+Our mission is to **collapse to zero** the cost of business process frontend development, for a huge range of apps from enterprise applications to throwaway tools.
+
+"Civilization advances by extending the number of operations we can perform without thinking about them.”
 
 Technical goals:
 * identify and label the common structure shared between spreadsheets and CRUD apps
@@ -95,8 +107,8 @@ Economic goals:
 * https://x.com/dustingetz
 
 ## License
-* free to use on local dev machines, mandatory runtime login (we are a business)
-* using in prod requires a license, contact us
+* free for individual use on local dev machines, mandatory runtime login (we are a business)
+* using in prod requires a license, contact us.
 * still working out the details
 
 ## Getting started
