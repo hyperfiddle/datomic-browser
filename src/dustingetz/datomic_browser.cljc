@@ -3,7 +3,7 @@
             [hyperfiddle.nav0 :as hf-nav]
             [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
             [hyperfiddle.entity-browser4 :as entity-browser :refer [HfqlRoot]]
-            [hyperfiddle.sitemap :refer [Index #?(:clj parse-sitemap)]]
+            [hyperfiddle.sitemap :refer [#?(:clj parse-sitemap)]]
             [hyperfiddle.router4 :as r]
             [hyperfiddle.electric-dom3 :as dom]
             [dustingetz.loader :refer [Loader]]
@@ -17,14 +17,16 @@
 (e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
 
 #?(:clj (defn attributes []
-          (->> (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [*db*] :io-context ::attributes, :query-stats ::attributes})
+          (->> (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [*db*]
+                         :io-context ::attributes, :query-stats ::attributes})
                (dx/query-stats-as-meta)
                (hf-nav/navigable (fn [?e] (d/entity *db* ?e))))))
 
 #?(:clj (defn attribute-count [!e] (-> *db-stats* :attrs (get (:db/ident !e)) :count)))
 
 #?(:clj (defn attribute-detail [a]
-          (->> (d/query {:query '[:find [?e ...] :in $ ?a :where [?e ?a]] :args [*db* a], :io-context ::attribute-detail, :query-stats ::attribute-detail})
+          (->> (d/query {:query '[:find [?e ...] :in $ ?a :where [?e ?a]] :args [*db* a],
+                         :io-context ::attribute-detail, :query-stats ::attribute-detail})
                (dx/query-stats-as-meta)
                (hf-nav/navigable (fn [?e] (d/entity *db* ?e))))))
 
