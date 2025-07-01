@@ -14,7 +14,7 @@ application classpath to be available"
     :or {optimize true, debug false, verbose false, version electric-user-version}
     :as config}]
   (log/info 'build-client (pr-str config #_argmap))
-  (b/delete {:path "resources/public/electric_starter_app/js"})
+  (b/delete {:path "resources/public/hyperfiddle-demo/js"})
   (b/delete {:path "resources/electric-manifest.edn"})
 
   ; bake electric-user-version into artifact, cljs and clj
@@ -50,7 +50,7 @@ application classpath to be available"
 
   (b/copy-dir {:target-dir class-dir :src-dirs ["src" "src-prod" "resources"]})
   (let [jar-name (or (some-> jar-name str) ; override for Dockerfile builds to avoid needing to reconstruct the name
-                   (format "electricfiddle-%s.jar" version))
+                   (format "hyperfiddle-starter-app-%s.jar" version))
         aliases [:prod]]
     (b/uber {:class-dir class-dir
              :uber-file (str "target/" jar-name)
