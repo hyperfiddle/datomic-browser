@@ -14,7 +14,7 @@ application classpath to be available"
     :or {optimize true, debug false, verbose false, version electric-user-version}
     :as config}]
   (log/info 'build-client (pr-str config #_argmap))
-  (b/delete {:path "resources/public/hyperfiddle-demo/js"})
+  (b/delete {:path "resources/public/hyperfiddle-starter-app/js"})
   (b/delete {:path "resources/electric-manifest.edn"})
 
   ; bake electric-user-version into artifact, cljs and clj

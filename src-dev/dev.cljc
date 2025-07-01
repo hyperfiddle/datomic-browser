@@ -32,7 +32,7 @@
        (def server (ring/run-jetty
                      (-> ; ring middlewares – applied bottom up:
                        (fn [ring-request] ; 5. index page fallback
-                         (-> (ring-response/resource-response "index.dev.html" {:root "public/hyperfiddle-demo"})
+                         (-> (ring-response/resource-response "index.dev.html" {:root "public/hyperfiddle-starter-app"})
                            (ring-response/content-type "text/html")))
                        (wrap-resource "public") ; 4. serve assets from disk.
                        (wrap-content-type) ; 3. boilerplate – to server assets with correct mime/type.
