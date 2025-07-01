@@ -8,6 +8,8 @@
  :aliases {:dev {:extra-paths ["src-dev"]
                  :extra-deps {thheller/shadow-cljs {:mvn/version "2.26.2"}
                               ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}}
+           :prod {:extra-paths ["src-prod"]
+                  :extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}}
            :build ; use `clj -X:prod:build build-client`, NOT -T!
            {:extra-paths ["src-build"]
             :ns-default  build
