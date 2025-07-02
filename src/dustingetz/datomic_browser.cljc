@@ -53,14 +53,15 @@
 
 (e/defn ^::e/export SemanticTooltip [?value entity props] ; FIXME props is a custom hyperfiddle deftype
   (e/server
-    (when (qualified-keyword? ?value)
-      (let [attribute (and props (hfql/unwrap props)) ; `and` is glitch guard, TODO remove
-            [typ _ unique?] (dx/easy-attr *db* attribute)]
-        (cond
-          (= :db/id attribute) (EntityTooltip ?value entity attribute)
-          (= :ref typ) (pprint-str (d/pull *db* ['*] ?value))
-          (= :identity unique?) (pprint-str (d/pull *db* ['*] [attribute #_(:db/ident (d/entity db a)) ?value])) ; resolve lookup ref
-          () nil)))))
+    (let [attribute (and props (hfql/unwrap props))] ; `and` is glitch guard, TODO remove
+      (cond (= :db/id attribute) (EntityTooltip ?value entity props)
+            (qualified-keyword? ?value)
+            (let [[typ _ unique?] (dx/easy-attr *db* attribute)]
+              (cond
+                (= :db/id attribute) (EntityTooltip ?value entity props)
+                (= :ref typ) (pprint-str (d/pull *db* ['*] ?value))
+                (= :identity unique?) (pprint-str (d/pull *db* ['*] [attribute #_(:db/ident (d/entity db a)) ?value])) ; resolve lookup ref
+                () nil))))))
 
 (e/defn ^::e/export SummarizeDatomicAttribute [?v row props] ; FIXME props is a custom hyperfiddle deftype
   (e/server
