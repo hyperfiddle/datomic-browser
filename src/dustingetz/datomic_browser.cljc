@@ -25,10 +25,9 @@
 #?(:clj (defn attribute-count [!e] (-> *db-stats* :attrs (get (:db/ident !e)) :count)))
 
 #?(:clj (defn attribute-detail [a]
-          (->> (d/query {:query '[:find [?e ...] :in $ ?a :where [?e ?a]] :args [*db* a],
-                         :io-context ::attribute-detail, :query-stats ::attribute-detail})
-               (dx/query-stats-as-meta)
-               (hf-nav/navigable (fn [?e] (d/entity *db* ?e))))))
+          (->> (d/datoms *db* :aevt a)
+            (map :e)
+            (hf-nav/navigable (fn [?e] (d/entity *db* ?e))))))
 
 #?(:clj (defn summarize-attr [db k] (->> (dx/easy-attr db k) (remove nil?) (map name) (str/join " "))))
 #?(:clj (defn summarize-attr* [?!a] (when ?!a (summarize-attr *db* (:db/ident ?!a)))))
