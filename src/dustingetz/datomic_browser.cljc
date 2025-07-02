@@ -49,26 +49,27 @@
               [(d/datoms history :eavt (:db/id e e)) ; resolve both data and object repr, todo revisit
                (d/datoms history :vaet (:db/id e e))]))))
 
-(e/defn ^::e/export EntityTooltip [value query-result attribute] (e/server (pprint-str (d/pull *db* ['*] value))))
+(e/defn ^::e/export EntityTooltip [?value entity props] ; FIXME props is a custom hyperfiddle deftype
+  (e/server (pprint-str (d/pull *db* ['*] ?value))))
 
-(e/defn ^::e/export SemanticTooltip [value entity attribute]
+(e/defn ^::e/export SemanticTooltip [?value entity props] ; FIXME props is a custom hyperfiddle deftype
   (e/server
-    (when (qualified-keyword? value)
-      (let [attr (and attribute (hfql/unwrap attribute)) ; `and` is glitch guard, TODO remove
-            [typ _ unique?] (dx/easy-attr *db* attr)]
+    (when (qualified-keyword? ?value)
+      (let [attribute (and props (hfql/unwrap props)) ; `and` is glitch guard, TODO remove
+            [typ _ unique?] (dx/easy-attr *db* attribute)]
         (cond
-          (= :db/id attr) (EntityTooltip value entity attribute)
-          (= :ref typ) (pprint-str (d/pull *db* ['*] value))
-          (= :identity unique?) (pprint-str (d/pull *db* ['*] [(hfql/unwrap attribute) #_(:db/ident (d/entity db a)) value])) ; resolve lookup ref
+          (= :db/id attribute) (EntityTooltip ?value entity attribute)
+          (= :ref typ) (pprint-str (d/pull *db* ['*] ?value))
+          (= :identity unique?) (pprint-str (d/pull *db* ['*] [attribute #_(:db/ident (d/entity db a)) ?value])) ; resolve lookup ref
           () nil)))))
 
-(e/defn ^::e/export SummarizeDatomicAttribute [v o attribute]
+(e/defn ^::e/export SummarizeDatomicAttribute [?v row props] ; FIXME props is a custom hyperfiddle deftype
   (e/server
-    ((fn [attribute] (try (summarize-attr *db* (hfql/unwrap attribute)) (catch Throwable _))) attribute)))
+    ((fn [attribute] (try (summarize-attr *db* attribute) (catch Throwable _))) (hfql/unwrap props))))
 
 #?(:clj (defn safe-long [v] (if (number? v) v 1))) ; glitch guard, TODO remove
-(e/defn ^::e/export EntityDbidCell [v o spec]
-  (let [v2 (e/server (safe-long v))]
+(e/defn ^::e/export EntityDbidCell [?value entity props] ; FIXME props is a custom hyperfiddle deftype
+  (let [v2 (e/server (safe-long ?value))]
     (dom/span (dom/text v2 " ") (r/link ['. [`(entity-history ~v2)]] (dom/text "entity history")))))
 
 #?(:clj (defmethod hf-nav/-resolve datomic.query.EntityMap [entity-map & _opts] (list `entity-detail (:db/id entity-map))))
