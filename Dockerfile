@@ -2,7 +2,12 @@ FROM clojure:temurin-11-tools-deps-1.12.0.1501 AS datomic-fixtures
 WORKDIR /app
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends unzip curl wget
 COPY datomic_fixtures.sh datomic_fixtures.sh
-RUN ./datomic_fixtures.sh
+COPY datomic_fixtures_mbrainz_full.sh datomic_fixtures_mbrainz_full.sh
+# RUN ./datomic_fixtures.sh
+RUN ./datomic_fixtures_mbrainz_full.sh
+# Shaves 3Gb+ of docker image
+RUN rm state/*.tar
+RUN rm state/*.zip
 
 FROM clojure:temurin-11-tools-deps-1.12.0.1501 AS build
 WORKDIR /app
@@ -30,4 +35,5 @@ COPY --from=build /app/target/app.jar app.jar
 RUN echo -e "/state/\n/vendor/" > .gitignore
 
 EXPOSE 8080
-CMD ./run_datomic.sh && java -cp app.jar clojure.main -m prod datomic-uri datomic:dev://localhost:4334/mbrainz-1968-1973
+# CMD ./run_datomic.sh && java -cp app.jar clojure.main -m prod datomic-uri datomic:dev://localhost:4334/mbrainz-1968-1973
+CMD ./run_datomic.sh && java -cp app.jar clojure.main -m prod datomic-uri datomic:dev://localhost:4334/mbrainz-full

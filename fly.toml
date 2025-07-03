@@ -1,6 +1,7 @@
 # Fly.io deployment configuration
 
-app = "hyperfiddle-starter-app"
+# app = "hyperfiddle-starter-app"
+app = "dry-wood-1492"
 primary_region = "ewr"
 kill_signal = "SIGINT"
 kill_timeout = "5s"
@@ -34,5 +35,5 @@ kill_timeout = "5s"
 
 [[vm]]
   memory = '8gb'
-  cpu_kind = 'shared'
-  cpus = 8
+  cpu_kind = 'performance'
+  cpus = 4
