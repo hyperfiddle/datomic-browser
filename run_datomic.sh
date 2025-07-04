@@ -1,4 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# * **Watch out:** the Datomic command works only from the datomic_browser directory precisely. The `transactor` java process will resolve the config file path relative to the java resource path, or something. This is a common gotcha!
+# * **Nix users**: user reports, "The transactor and the datomic bash files begin with an invalid shebang that only matters to nix people, see https://www.reddit.com/r/NixOS/comments/k8ja54/nixos_running_scripts_problem/"
+
+
 set -e
 nc -z localhost 4334 2>/dev/null && { echo "Port 4334 already in use"; exit 1; } || true
 
