@@ -1,27 +1,47 @@
-# Hyperfiddle starter app
+# Datomic entity browser
 
-## Links
+This is an easy way to get a generic web-based support/diagnostics UI for any production Datomic service, with the ability to extend using Clojure to add custom queries, routes, and views.
 
-* Hyperfiddle github: https://github.com/hyperfiddle/hyperfiddle
+[![20250627_datomic_entity_browser.png](./docs/20250627_datomic_entity_browser.png)](./docs/20250627_datomic_entity_browser.png)
+
+Features:
+
+* **large Datomic databases** and large query results (50k+ result count)
+* **monitor and kill slow queries from very large databases** -- coming very soon, currently in test
+* entity navigation, automatic reverse attribute display and navigation
+* entity preview tooltip on all IDs and refs
+* query perf diagnostics (io-stats, query-stats etc)
+* classpath connected for custom queries (direct classpath linking to any function)
+* ORM-compatible, query Datomic however you want with Clojure functions
+* fluid virtual scroll over 50k record collections
+* automatic filtering and sort for queries returning < 10k records
+* supports large queries > 10k records performantly (bring your own sublinear sort/filter logic)
+* streaming lazy queries e.g. qseq – we have a prototype, contact us
+* pull human readable idents on low level IDs such as datom tuples
+* tables have column selection and inference
+* derived fields and "virtual attributes" (functions over entities)
+* built-in schema browser with attribute counts, docstrings, search, avet index
+* built-in entity history view
+* easy to integrate ring middleware - embed in your at-work httpkit or jetty services
+* enterprise SSO (contact us)
+
+[![20250627_datomic_schema_app.png](./docs/20250627_datomic_schema_app.png)](./docs/20250627_datomic_schema_app.png)
+
+**FAQ: Which Datomic product lines are supported?**
+* Datomic Onprem, Peer API: supported
+* Datomic Onprem, Client API: possible, contact us
+* Datomic Cloud, client API: possible, contact us
+* Datomic Cloud, Ions: unsupported, Electric uses a websocket, afaik nobody has attempted running Electric in an Ion yet.
+
+We built this as an example of something that is difficult to build in Clojure/Script, but is a straightforward 500 LOC in Electric Clojure, and is now essentially trivialized by "Hyperfiddle". Hyperfiddle is an Electric library for building high fidelity enterprise frontends for any service, function or object. https://github.com/hyperfiddle/hyperfiddle
 
 ## Getting started
 
-```shell
-git clone git@gitlab.com:hyperfiddle/hyperfiddle-starter-app.git
-cd hyperfiddle-starter-app
+Coming soon
 
-# Install demo data
-java -version              # we use openjdk version "23.0.2"
-./datomic_fixtures.sh      # get Datomic (free) and example data
-./run_datomic.sh
+> [!NOTE]
+> Source code is coming asap, I know you want to see it, it's blocked on some organizational work. For now the project is in private beta, request access here: https://www.hyperfiddle.net/early-access.html and then DM me @dustingetz on slack to schedule a demo.
 
-# Run demo app. You’ll be asked to authenticate.
-# First via Clojure CLI to see it working. https://clojure.org/guides/install_clojure
-clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-1973"'
-
-# Now jack in to REPL, :dev alias:
-user=> (dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})
-```
 
 ## License
 * free for individual use on local dev machines, mandatory runtime login (we are a business)
