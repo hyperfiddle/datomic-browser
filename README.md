@@ -1,10 +1,12 @@
 # Datomic entity browser
 
-This is an easy way to get a generic web-based support/diagnostics UI for any production Datomic service, with the ability to extend using Clojure to add custom queries, routes, and views.
+This app is an easy way to get a generic web-based support/diagnostics UI for any production Datomic service, with the ability to extend using Clojure to add custom queries, routes, and views.
+
+We built this as a demonstration of something that is difficult to build in Clojure/Script, but is a straightforward 500 LOC in Electric Clojure, and is now essentially trivialized by "Hyperfiddle". Hyperfiddle is an Electric library for building high fidelity enterprise frontends for any service, function or object. https://github.com/hyperfiddle/hyperfiddle
 
 [![20250627_datomic_entity_browser.png](./docs/20250627_datomic_entity_browser.png)](./docs/20250627_datomic_entity_browser.png)
 
-Features:
+Datomic browser features:
 
 * **large Datomic databases** and large query results (50k+ result count)
 * **monitor and kill slow queries from very large databases** -- coming very soon, currently in test
@@ -32,8 +34,6 @@ Features:
 * Datomic Onprem, Client API: possible, contact us
 * Datomic Cloud, client API: possible, contact us
 * Datomic Cloud, Ions: unsupported, Electric uses a websocket, afaik nobody has attempted running Electric in an Ion yet.
-
-We built this as an example of something that is difficult to build in Clojure/Script, but is a straightforward 500 LOC in Electric Clojure, and is now essentially trivialized by "Hyperfiddle". Hyperfiddle is an Electric library for building high fidelity enterprise frontends for any service, function or object. https://github.com/hyperfiddle/hyperfiddle
 
 ## Getting started
 
