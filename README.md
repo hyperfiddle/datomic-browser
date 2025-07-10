@@ -2,7 +2,9 @@
 
 This app is an easy way to get a generic web-based support/diagnostics UI for any production Datomic service, with the ability to extend using Clojure to add custom queries, routes, and views.
 
-We built this as a demonstration of something that is difficult to build in Clojure/Script, but is a straightforward 500 LOC in Electric Clojure, and is now essentially trivialized by "Hyperfiddle". Hyperfiddle is an Electric library for building high fidelity enterprise frontends for any service, function or object. https://github.com/hyperfiddle/hyperfiddle
+This app is **150 LOC** + datomic helpers! See: [datomic-browser.cljc](https://github.com/hyperfiddle/datomic-browser/blob/main/src/dustingetz/datomic_browser.cljc)
+
+We built this as a demonstration of something that is difficult to build in Clojure/Script, but is a straightforward 500 LOC in Electric Clojure, and is now essentially trivialized by "Hyperfiddle". [Hyperfiddle](https://github.com/hyperfiddle/hyperfiddle) is an Electric library for building high fidelity enterprise frontends for any service, function or object.
 
 [![20250627_datomic_entity_browser.png](./docs/20250627_datomic_entity_browser.png)](./docs/20250627_datomic_entity_browser.png)
 
@@ -32,7 +34,7 @@ Datomic browser features:
 **FAQ: Which Datomic product lines are supported?**
 * Datomic Onprem, Peer API: supported
 * Datomic Onprem, Client API: possible, contact us
-* Datomic Cloud, client API: possible, contact us
+* Datomic Cloud, Client API: possible, contact us
 * Datomic Cloud, Ions: unsupported, Electric uses a websocket, afaik nobody has attempted running Electric in an Ion yet.
 
 ## Getting started
