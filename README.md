@@ -17,6 +17,8 @@ cd datomic-browser
 ./datomic_fixtures.sh                   # Download Datomic w/ mbrainz dataset
 ./run_datomic.sh
 clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-1973"'
+# Please sign up or login to activate: ...
+# INFO  dev: 👉 http://0.0.0.0:8080
 ```
 
 Repl: jack-in with `:dev` alias, then eval `(dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})`
