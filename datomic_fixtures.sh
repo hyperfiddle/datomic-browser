@@ -14,6 +14,8 @@ function downloadAsNeeded {
     curl "$1" -O -C - || fail "Failed to download $1"
 }
 
+function timeout() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+
 mkdir -p state
 pushd state
 
@@ -43,7 +45,7 @@ datomic-pro/bin/transactor config/fixtures-transactor.properties &
 datomic_transactor_pid=$!
 
 info "Waiting for Datomic to start on port $PORT..."
-while ! timeout 1 bash -c "echo > /dev/tcp/localhost/$PORT 2> /dev/null" 2> /dev/null; do :; done
+while ! timeout bash -c "echo > /dev/tcp/localhost/$PORT 2> /dev/null" 2> /dev/null; do :; done
 
 # https://datomic.narkive.com/OUskfRdr/backup-error
 datomic-pro/bin/datomic restore-db "file:$(pwd)/mbrainz-1968-1973 datomic:dev://localhost:$PORT/mbrainz-1968-1973"
