@@ -1,27 +1,26 @@
-# Hyperfiddle starter app
+# Datomic-browser
 
 ## Links
 
 * Hyperfiddle github: https://github.com/hyperfiddle/hyperfiddle
+* Datomic-browser public readme: https://github.com/hyperfiddle/datomic-browser
 
 ## Getting started
 
+Prerequsites
+* Java modern version
+* Clojure CLI https://clojure.org/guides/install_clojure
+
 ```shell
-git clone git@gitlab.com:hyperfiddle/hyperfiddle-starter-app.git
-cd hyperfiddle-starter-app
-
-# Install demo data
-java -version              # we use openjdk version "23.0.2"
-./datomic_fixtures.sh      # get Datomic (free) and example data
+java -version              # we use openjdk 23.0.2
+git clone git@gitlab.com:hyperfiddle/datomic-browser.git
+cd datomic-browser
+./datomic_fixtures.sh      # download Datomic w/ mbrainz dataset
 ./run_datomic.sh
-
-# Run demo app. You’ll be asked to authenticate.
-# First via Clojure CLI to see it working. https://clojure.org/guides/install_clojure
 clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-1973"'
-
-# Now jack in to REPL, :dev alias:
-user=> (dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})
 ```
+
+Repl: jack-in with `:dev` alias, then eval `(dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})`
 
 ## License
 * free for individual use on local dev machines, mandatory runtime login (we are a business)
