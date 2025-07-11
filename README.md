@@ -12,13 +12,10 @@ Prerequsites
 * Clojure CLI https://clojure.org/guides/install_clojure
 
 ```shell
-# Download Datomic w/ mbrainz dataset
-./datomic_fixtures.sh
-./run_datomic.sh
-
-# Clone and run project repo
 git clone git@gitlab.com:hyperfiddle/datomic-browser.git
 cd datomic-browser
+./datomic_fixtures.sh                   # Download Datomic w/ mbrainz dataset
+./run_datomic.sh
 clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-1973"'
 ```
 
