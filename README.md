@@ -8,15 +8,17 @@
 ## Getting started
 
 Prerequsites
-* Java modern version
+* `java -version` modern version, we use `openjdk version "23.0.2"`
 * Clojure CLI https://clojure.org/guides/install_clojure
 
 ```shell
-java -version              # we use openjdk 23.0.2
+# Download Datomic w/ mbrainz dataset
+./datomic_fixtures.sh
+./run_datomic.sh
+
+# Clone and run project repo
 git clone git@gitlab.com:hyperfiddle/datomic-browser.git
 cd datomic-browser
-./datomic_fixtures.sh      # download Datomic w/ mbrainz dataset
-./run_datomic.sh
 clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-1973"'
 ```
 
