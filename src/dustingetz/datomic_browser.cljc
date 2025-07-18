@@ -1,7 +1,7 @@
 (ns dustingetz.datomic-browser
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
-            [hyperfiddle.navigator4 :as navigator :refer [HfqlRoot]]
+            [hyperfiddle.navigator4 :as navigator :refer [HfqlRoot *search]]
             [hyperfiddle.router4 :as r]
             [hyperfiddle.electric-dom3 :as dom]
             [dustingetz.loader :refer [Loader]]
@@ -25,10 +25,11 @@
 #?(:clj (defn indexed-attribute? [db a] (true? (:db/index (dx/query-schema db a)))))
 
 #?(:clj (defn attribute-detail [a]
-          (let [index (if (indexed-attribute? *db* a) :avet :aevt)]
-            (->> (d/datoms *db* index a)
-              (map :e)
-              (hfql/navigable (fn [?e] (d/entity *db* ?e)))))))
+          (->> (if (indexed-attribute? *db* a)
+                 (d/index-range *db* a (not-empty *search) nil) ; end is exclusive, can't pass *search twice
+                 (d/datoms *db* :aevt a))
+            (map :e)
+            (hfql/navigable (fn [?e] (d/entity *db* ?e))))))
 
 #?(:clj (defn summarize-attr [db k] (->> (dx/easy-attr db k) (remove nil?) (map name) (str/join " "))))
 #?(:clj (defn summarize-attr* [?!a] (when ?!a (summarize-attr *db* (:db/ident ?!a)))))
