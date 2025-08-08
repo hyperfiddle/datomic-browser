@@ -24,6 +24,7 @@ clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-19
 Repl: jack-in with `:dev` alias, then eval `(dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})`
 
 ## License
-* free for individual use on local dev machines, mandatory runtime login (we are a business)
-* using in prod requires a license, contact us.
+* source available business license
+* free for individual use on local dev machines, login to activate (we are a business)
+* using in prod requires a license, DM dustingetz on slack.
 * still working out the details
