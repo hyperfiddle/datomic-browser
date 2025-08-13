@@ -4,7 +4,7 @@
 
    [hyperfiddle.electric3 :as e]
    [hyperfiddle.electric-dom3 :as dom]
-   [hyperfiddle.entrypoint :refer [Hyperfiddle]]))
+   [hyperfiddle.entrypoint2 :refer [Hyperfiddle]]))
 
 (e/defn InjectAndRunHyperfiddle [ring-request datomic-uri]
   (e/client
