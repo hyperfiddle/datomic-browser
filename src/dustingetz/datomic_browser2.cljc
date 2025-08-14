@@ -51,19 +51,19 @@
               [(d/datoms history :eavt (:db/id e e)) ; resolve both data and object repr, todo revisit
                (d/datoms history :vaet (:db/id e e))]))))
 
-(e/defn ^::e/export EntityTooltip [?value entity props] ; FIXME props is a custom hyperfiddle deftype
-  (e/server (pprint-str (d/pull *db* ['*] ?value))))
+(e/defn ^::e/export EntityTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
+  (e/server (pprint-str (d/pull *db* ['*] value))))
 
-(e/defn ^::e/export SemanticTooltip [?value entity props] ; FIXME props is a custom hyperfiddle deftype
+(e/defn ^::e/export SemanticTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
   (e/server
-    #_(let [attribute (and props (hfql/unwrap props))] ; `and` is glitch guard, TODO remove
-      (cond (= :db/id attribute) (EntityTooltip ?value entity props)
-            (qualified-keyword? ?value)
+    (let [attribute (hfql/form edge)]
+      (cond (= :db/id attribute) (EntityTooltip entity edge value)
+            (qualified-keyword? value)
             (let [[typ _ unique?] (dx/easy-attr *db* attribute)]
               (cond
-                (= :db/id attribute) (EntityTooltip ?value entity props)
-                (= :ref typ) (pprint-str (d/pull *db* ['*] ?value))
-                (= :identity unique?) (pprint-str (d/pull *db* ['*] [attribute #_(:db/ident (d/entity db a)) ?value])) ; resolve lookup ref
+                (= :db/id attribute) (EntityTooltip entity edge value)
+                (= :ref typ) (pprint-str (d/pull *db* ['*] value))
+                (= :identity unique?) (pprint-str (d/pull *db* ['*] [attribute #_(:db/ident (d/entity db a)) value])) ; resolve lookup ref
                 () nil))))))
 
 (e/defn ^::e/export SummarizeDatomicAttribute [?v row props] ; FIXME props is a custom hyperfiddle deftype
@@ -104,14 +104,14 @@
          {(attributes) ^{::hfql/ColumnHeaderTooltip SummarizeDatomicAttribute
                          ::hfql/select              '(attribute-entity-detail %)}
           [^{::hfql/link    '(attribute-detail %)
-             ::hfql/Tooltip EntityTooltip}
+             ::hfql/Tooltip `EntityTooltip}
            #(:db/ident %)
 
            attribute-count
            summarize-attr*
            :db/doc]
 
-          attribute-entity-detail ^{::hfql/Tooltip SemanticTooltip}
+          attribute-entity-detail ^{::hfql/Tooltip `SemanticTooltip}
           [^{::hfql/Render EntityDbidCell}
            #(:db/id %)
 
