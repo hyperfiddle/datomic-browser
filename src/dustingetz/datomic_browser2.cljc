@@ -66,9 +66,9 @@
                 (= :identity unique?) (pprint-str (d/pull *db* ['*] [attribute #_(:db/ident (d/entity db a)) value])) ; resolve lookup ref
                 () nil))))))
 
-(e/defn ^::e/export SummarizeDatomicAttribute [?v row props] ; FIXME props is a custom hyperfiddle deftype
+(e/defn ^::e/export SummarizeDatomicAttribute [_entity edge _value] ; FIXME props is a custom hyperfiddle type
   (e/server
-    #_((fn [attribute] (try (summarize-attr *db* attribute) (catch Throwable _))) (hfql/unwrap props))))
+    ((fn [attribute] (try (str/trimr (str attribute " " (summarize-attr *db* attribute))) (catch Throwable _))) (hfql/resolved-form edge))))
 
 #?(:clj (defn safe-long [v] (if (number? v) v 1))) ; glitch guard, TODO remove
 (e/defn ^::e/export EntityDbidCell [?value entity props] ; FIXME props is a custom hyperfiddle deftype
@@ -101,7 +101,7 @@
 #?(:clj
    (def datomic-browser-sitemap
      (hfql
-         {(attributes) ^{::hfql/ColumnHeaderTooltip SummarizeDatomicAttribute
+         {(attributes) ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
                          ::hfql/select              '(attribute-entity-detail %)}
           [^{::hfql/link    '(attribute-detail %)
              ::hfql/Tooltip `EntityTooltip}
