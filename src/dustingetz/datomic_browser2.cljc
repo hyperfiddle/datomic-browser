@@ -70,10 +70,8 @@
   (e/server
     ((fn [attribute] (try (str/trimr (str attribute " " (summarize-attr *db* attribute))) (catch Throwable _))) (hfql/resolved-form edge))))
 
-#?(:clj (defn safe-long [v] (if (number? v) v 1))) ; glitch guard, TODO remove
 (e/defn ^::e/export EntityDbidCell [entity edge value] ; FIXME edge is a custom hyperfiddle type
-  (let [v2 (e/server (safe-long value))]
-    (dom/span (dom/text v2 " ") (r/link ['. [`(entity-history ~v2)]] (dom/text "entity history")))))
+  (dom/span (dom/text value " ") (r/link ['. [`(entity-history ~(hfql/identify entity))]] (dom/text "entity history"))))
 
 #?(:clj (defmethod hfql/-resolve datomic.query.EntityMap [entity-map & _opts] (list `entity-detail (:db/id entity-map))))
 
