@@ -116,9 +116,10 @@
            attribute-count
            summarize-attr*]
 
-          #_#_(attribute-detail :a) (hfql [(hfql :db/id {::hfql/link '(entity-detail %v)})]
-                                  {::hfql/ColumnHeaderTooltip SummarizeDatomicAttribute
-                                   ::hfql/Tooltip             SemanticTooltip})
+          attribute-detail ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
+                             ::hfql/Tooltip             `SemanticTooltip}
+          [^{::hfql/link '(entity-detail %v)}
+           #(:db/id %)]
 
           #_#_(tx-detail :tx) [(hfql :e {::hfql/link    '(entity-detail :e)
                                      ::hfql/Tooltip EntityTooltip})
