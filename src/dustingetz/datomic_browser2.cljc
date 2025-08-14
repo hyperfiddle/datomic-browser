@@ -42,8 +42,8 @@
 
 #?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log *conn*) e (inc e)) (into [] (comp (mapcat :data) (map datom->map))))))
 
-#?(:clj (defn entity-detail [e] (d/entity *db* e)))
-#?(:clj (defn attribute-entity-detail [e] (prn `attribute-entity-detail e) e #_(d/entity *db* e)))
+#?(:clj (def entity-detail identity))
+#?(:clj (def attribute-entity-detail identity))
 
 #?(:clj (defn entity-history [e]
           (let [history (d/history *db*)]
@@ -113,9 +113,7 @@
           [^{::hfql/Render `EntityDbidCell}
            #(:db/id %)
 
-           ^{::hfql/label attribute-count}
            attribute-count
-
            summarize-attr*]
 
           #_#_(attribute-detail :a) (hfql [(hfql :db/id {::hfql/link '(entity-detail %v)})]
