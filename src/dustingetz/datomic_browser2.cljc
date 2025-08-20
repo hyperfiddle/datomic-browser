@@ -42,7 +42,7 @@
 
 #?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log *conn*) e (inc e)) (into [] (comp (mapcat :data) (map datom->map))))))
 
-#?(:clj (def entity-detail identity))
+#?(:clj (defn entity-detail [e] (if (instance? datomic.query.EntityMap e) e (d/entity *db* e)))) ; FIXME wart
 #?(:clj (def attribute-entity-detail identity))
 
 #?(:clj (defn entity-history [e]
@@ -71,7 +71,7 @@
     ((fn [attribute] (try (str/trimr (str attribute " " (summarize-attr *db* attribute))) (catch Throwable _))) (hfql/resolved-form edge))))
 
 (e/defn ^::e/export EntityDbidCell [entity edge value] ; FIXME edge is a custom hyperfiddle type
-  (dom/span (dom/text value " ") (r/link ['. [`(entity-history ~(hfql/identify entity))]] (dom/text "entity history"))))
+  (dom/span (dom/text (e/server (pr-str value)) " ") (r/link ['. [`(entity-history ~(hfql/identify entity))]] (dom/text "entity history"))))
 
 #?(:clj (defmethod hfql/-resolve datomic.query.EntityMap [entity-map & _opts] (list `entity-detail (:db/id entity-map))))
 
@@ -118,25 +118,30 @@
 
           attribute-detail ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
                              ::hfql/Tooltip             `SemanticTooltip}
-          [^{::hfql/link '(entity-detail %v)}
+          [^{::hfql/link '(entity-detail %)}
            #(:db/id %)]
 
-          #_#_(tx-detail :tx) [(hfql :e {::hfql/link    '(entity-detail :e)
-                                     ::hfql/Tooltip EntityTooltip})
-                           (hfql {:a :db/ident} {::hfql/link    '(attribute-detail %v)
-                                                 ::hfql/Tooltip EntityTooltip})
-                           :v]
+          tx-detail [^{::hfql/link    '(entity-detail :e)
+                       ::hfql/Tooltip `EntityTooltip}
+                     #(:e %)
+                     ^{::hfql/link    '(attribute-detail %)
+                       ::hfql/Tooltip `EntityTooltip}
+                     {:a :db/ident} ; FIXME
+                     :v]
 
-          #_#_(entity-detail :e) (hfql [(hfql :db/id {::hfql/Render EntityDbidCell})] ; TODO want link and Tooltip instead
-                               {::hfql/Tooltip SemanticTooltip})
+          entity-detail ^{::hfql/Tooltip `SemanticTooltip} ; TODO want link and Tooltip instead
+          [^{::hfql/Render `EntityDbidCell}
+           #(:db/id %)]
 
-          #_#_(entity-history :e) [:e
-                               (hfql {:a :db/ident} {::hfql/link    '(attribute-detail %v)
-                                                     ::hfql/Tooltip EntityTooltip})
-                               :v
-                               (hfql :tx {::hfql/link    '(tx-detail :tx)
-                                          ::hfql/Tooltip EntityTooltip})
-                               :added]})))
+          entity-history [:e
+                          ^{::hfql/link '(attribute-detail %)
+                            ::hfql/Tooltip `EntityTooltip}
+                          {:a :db/ident} ; FIXME
+                          :v
+                          ^{::hfql/link    '(tx-detail %v)
+                            ::hfql/Tooltip `EntityTooltip}
+                          #(:tx %)
+                          :added]})))
 ;; (hfql [:db/ident])
 ;; (hfql/aliased-form (ns-name *ns*) :db/ident)
 
