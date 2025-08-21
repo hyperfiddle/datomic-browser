@@ -19,7 +19,7 @@
           (->> (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [*db*]
                          :io-context ::attributes, :query-stats ::attributes})
                (dx/query-stats-as-meta)
-               (hfql/navigable (fn [?e] (d/entity *db* ?e))))))
+               (hfql/navigable (fn [_index ?e] (d/entity *db* ?e))))))
 
 #?(:clj (defn attribute-count [!e] (-> *db-stats* :attrs (get (:db/ident !e)) :count)))
 
@@ -30,7 +30,7 @@
                  (d/index-range *db* a (not-empty *search) nil) ; end is exclusive, can't pass *search twice
                  (d/datoms *db* :aevt a))
             (map :e)
-            (hfql/navigable (fn [?e] (d/entity *db* ?e))))))
+            (hfql/navigable (fn [_index ?e] (d/entity *db* ?e))))))
 
 #?(:clj (defn summarize-attr [db k] (->> (dx/easy-attr db k) (remove nil?) (map name) (str/join " "))))
 #?(:clj (defn summarize-attr* [?!a] (when ?!a (summarize-attr *db* (:db/ident ?!a)))))
@@ -38,7 +38,7 @@
 #?(:clj (defn datom->map [[e a v tx added]]
           (->> {:e e, :a a, :v v, :tx tx, :added added}
             (hfql/identifiable hash)
-            (hfql/navigable-indexed (fn [key value] (if (= :a key) (d/entity *db* a) value))))))
+            (hfql/navigable (fn [key value] (if (= :a key) (d/entity *db* a) value))))))
 
 #?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log *conn*) e (inc e)) (into [] (comp (mapcat :data) (map datom->map))))))
 
@@ -126,6 +126,7 @@
                      #(:e %)
                      ^{::hfql/link    '(attribute-detail %)
                        ::hfql/Tooltip `EntityTooltip}
+                     ^{::hfql/label :db/ident}
                      {:a :db/ident} ; FIXME
                      :v]
 
@@ -153,7 +154,7 @@
               *db-stats* db-stats
               e/*bindings* (e/server (merge e/*bindings* {#'*conn* conn, #'*db* db, #'*db-stats* db-stats}))
               e/*exports*  (e/exports)
-              navigator/*server-pretty (e/server {datomic.query.EntityMap (fn [entity] (str "EntityMap" (pr-str entity)))})]
+              navigator/*server-pretty (e/server {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (hfql/identify entity) "]"))})]
       (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
       (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser.css"}))
       (HfqlRoot sitemap entrypoints))))
