@@ -52,7 +52,7 @@
                (d/datoms history :vaet (:db/id e e))]))))
 
 (e/defn ^::e/export EntityTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
-  (e/server (pprint-str (d/pull *db* ['*] (:db/id entity)))))
+  (e/server (pprint-str (d/pull *db* ['*] value))))
 
 (e/defn ^::e/export SemanticTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
   (e/server
