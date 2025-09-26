@@ -1,7 +1,7 @@
 (ns dustingetz.datomic-browser2
   (:require [hyperfiddle.electric3 :as e]
             ;; [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
-            [hyperfiddle.hfql1 :as hfql :refer [hfql]]
+            [hyperfiddle.hfql2 :as hfql :refer [hfql]]
             [hyperfiddle.navigator5 :as navigator :refer [HfqlRoot *search]]
             [hyperfiddle.router5 :as r]
             [hyperfiddle.electric-dom3 :as dom]
