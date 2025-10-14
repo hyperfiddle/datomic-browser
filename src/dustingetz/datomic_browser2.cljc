@@ -17,11 +17,10 @@
 (e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
 
 #?(:clj (defn attributes []
-          (prn "IO!" `attributes)
           (->> (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [*db*]
                          :io-context ::attributes, :query-stats ::attributes})
             (dx/query-stats-as-meta)
-            (hfql/navigable (fn [_index ?e] (prn "nav" ?e) (d/entity *db* ?e))))))
+            (hfql/navigable (fn [_index ?e] (d/entity *db* ?e))))))
 
 #?(:clj (defn attribute-count [!e] (-> *db-stats* :attrs (get (:db/ident !e)) :count)))
 
@@ -32,6 +31,7 @@
                  (d/index-range *db* a (not-empty *local-search) nil) ; end is exclusive, can't pass *search twice
                  (d/datoms *db* :aevt a))
             (map :e)
+            (hfql/filtered) ; optimisation – tag as already filtered, disable auto in-memory search
             (hfql/navigable (fn [_index ?e] (d/entity *db* ?e))))))
 
 #?(:clj (defn summarize-attr [db k] (->> (dx/easy-attr db k) (remove nil?) (map name) (str/join " "))))
