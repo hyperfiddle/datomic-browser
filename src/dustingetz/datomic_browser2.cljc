@@ -2,7 +2,8 @@
   (:require [hyperfiddle.electric3 :as e]
             ;; [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
             [hyperfiddle.hfql2 :as hfql :refer [hfql]]
-            [hyperfiddle.navigator5 :as navigator :refer [HfqlRoot *search]]
+            [hyperfiddle.navigator6 :as navigator :refer [HfqlRoot]]
+            [hyperfiddle.navigator6.search :refer [*local-search]]
             [hyperfiddle.router5 :as r]
             [hyperfiddle.electric-dom3 :as dom]
             [dustingetz.loader :refer [Loader]]
@@ -16,10 +17,11 @@
 (e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
 
 #?(:clj (defn attributes []
+          (prn "IO!" `attributes)
           (->> (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [*db*]
                          :io-context ::attributes, :query-stats ::attributes})
-               (dx/query-stats-as-meta)
-               (hfql/navigable (fn [_index ?e] (d/entity *db* ?e))))))
+            (dx/query-stats-as-meta)
+            (hfql/navigable (fn [_index ?e] (prn "nav" ?e) (d/entity *db* ?e))))))
 
 #?(:clj (defn attribute-count [!e] (-> *db-stats* :attrs (get (:db/ident !e)) :count)))
 
@@ -27,7 +29,7 @@
 
 #?(:clj (defn attribute-detail [a]
           (->> (if (indexed-attribute? *db* a)
-                 (d/index-range *db* a (not-empty *search) nil) ; end is exclusive, can't pass *search twice
+                 (d/index-range *db* a (not-empty *local-search) nil) ; end is exclusive, can't pass *search twice
                  (d/datoms *db* :aevt a))
             (map :e)
             (hfql/navigable (fn [_index ?e] (d/entity *db* ?e))))))
@@ -55,7 +57,7 @@
   (e/server (pprint-str (d/pull *db* ['*] value))))
 
 (e/defn ^::e/export SemanticTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
-  (e/server
+  #_(e/server
     (let [attribute (hfql/form edge)]
       (cond (= :db/id attribute) (EntityTooltip entity edge value)
             (qualified-keyword? value)
@@ -68,12 +70,15 @@
 
 (e/defn ^::e/export SummarizeDatomicAttribute [_entity edge _value] ; FIXME props is a custom hyperfiddle type
   (e/server
-    ((fn [attribute] (try (str/trimr (str attribute " " (summarize-attr *db* attribute))) (catch Throwable _))) (hfql/resolved-form edge))))
+    ((fn [attribute] (try (str/trimr (str attribute " " (summarize-attr *db* attribute))) (catch Throwable _)))
+     (hfql/symbolic-edge edge)
+     #_(hfql/resolved-form edge))))
 
 (e/defn ^::e/export EntityDbidCell [entity edge value] ; FIXME edge is a custom hyperfiddle type
   (dom/span (dom/text (e/server (pr-str value)) " ") (r/link ['. [`(entity-history ~(hfql/identify entity))]] (dom/text "entity history"))))
 
-#?(:clj (defmethod hfql/-resolve datomic.query.EntityMap [entity-map & _opts] (list `entity-detail (:db/id entity-map))))
+;; #?(:clj (defmethod hfql/resolve datomic.query.EntityMap [entity-map & _opts] (list `entity-detail (:db/id entity-map))))
+;; #?(:clj (defmethod hfql/resolve `find-var [[_ var-sym]] (find-var var-sym))) ; example
 
 #?(:clj ; list all attributes of an entity – including reverse refs.
    (extend-type datomic.query.EntityMap
@@ -84,7 +89,8 @@
        (let [attributes (cons :db/id (keys (d/touch entity)))
              reverse-refs (dx/reverse-refs (d/entity-db entity) (:db/id entity))
              reverse-attributes (->> reverse-refs (map first) (distinct) (map dx/invert-attribute))]
-         (->> (concat attributes reverse-attributes)
+         @(def _hfql_entity (hfql/hfql* (hyperfiddle.hfql1.analyzer/analyze {} (vec (concat attributes reverse-attributes)))))
+         #_(->> (concat attributes reverse-attributes)
            (map hfql/lift)
            (hfql/build-pull))))))
 
@@ -98,51 +104,51 @@
 
 #?(:clj
    (def datomic-browser-sitemap
-     (hfql
-         {(attributes) ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
-                         ::hfql/select              '(attribute-entity-detail %)}
-          [^{::hfql/link    '(attribute-detail %)
-             ::hfql/Tooltip `EntityTooltip}
-           #(:db/ident %)
+     {`attributes (hfql {(attributes) {*  ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
+                                            ::hfql/select              '(attribute-entity-detail %)}
+                                       [^{::hfql/link    '(attribute-detail %)
+                                          ::hfql/Tooltip `EntityTooltip}
+                                        #(:db/ident %)
 
-           attribute-count
-           summarize-attr*
-           :db/doc]
+                                        attribute-count
+                                        summarize-attr*
+                                        :db/doc]}})
 
-          attribute-entity-detail ^{::hfql/Tooltip `SemanticTooltip}
-          [^{::hfql/Render `EntityDbidCell}
-           #(:db/id %)
+      `attribute-entity-detail
+      (hfql {attribute-entity-detail ^{::hfql/Tooltip `SemanticTooltip}
+             [^{::hfql/Render `EntityDbidCell}
+              #(:db/id %)
 
-           attribute-count
-           summarize-attr*]
+              attribute-count
+              summarize-attr*]})
 
-          attribute-detail ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
-                             ::hfql/Tooltip             `SemanticTooltip}
-          [^{::hfql/link '(entity-detail %)}
-           #(:db/id %)]
+      `attribute-detail (hfql {attribute-detail ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
+                                                  ::hfql/Tooltip             `SemanticTooltip}
+                               [^{::hfql/link '(entity-detail %)}
+                                #(:db/id %)]})
 
-          tx-detail [^{::hfql/link    '(entity-detail :e)
-                       ::hfql/Tooltip `EntityTooltip}
-                     #(:e %)
-                     ^{::hfql/link    '(attribute-detail %)
-                       ::hfql/Tooltip `EntityTooltip}
-                     ^{::hfql/label :db/ident}
-                     {:a :db/ident} ; FIXME
-                     :v]
+      `tx-detail (hfql {tx-detail [^{::hfql/link    '(entity-detail :e)
+                                     ::hfql/Tooltip `EntityTooltip}
+                                   #(:e %)
+                                   ^{::hfql/link    '(attribute-detail %)
+                                     ::hfql/Tooltip `EntityTooltip}
+                                   ^{::hfql/label :db/ident}
+                                   {:a :db/ident} ; FIXME
+                                   :v]})
 
-          entity-detail ^{::hfql/Tooltip `SemanticTooltip} ; TODO want link and Tooltip instead
-          [^{::hfql/Render `EntityDbidCell}
-           #(:db/id %)]
+      `entity-detail (hfql {entity-detail ^{::hfql/Tooltip `SemanticTooltip} ; TODO want link and Tooltip instead
+                            [^{::hfql/Render `EntityDbidCell}
+                             #(:db/id %)]})
 
-          entity-history [:e
-                          ^{::hfql/link '(attribute-detail %)
-                            ::hfql/Tooltip `EntityTooltip}
-                          {:a :db/ident} ; FIXME
-                          :v
-                          ^{::hfql/link    '(tx-detail %v)
-                            ::hfql/Tooltip `EntityTooltip}
-                          #(:tx %)
-                          :added]})))
+      `entity-history (hfql {entity-history [:e
+                                             ^{::hfql/link '(attribute-detail %)
+                                               ::hfql/Tooltip `EntityTooltip}
+                                             {:a :db/ident} ; FIXME
+                                             :v
+                                             ^{::hfql/link    '(tx-detail %v)
+                                               ::hfql/Tooltip `EntityTooltip}
+                                             #(:tx %)
+                                             :added]})}))
 ;; (hfql [:db/ident])
 ;; (hfql/aliased-form (ns-name *ns*) :db/ident)
 
@@ -154,7 +160,7 @@
               *db-stats* db-stats
               e/*bindings* (e/server (merge e/*bindings* {#'*conn* conn, #'*db* db, #'*db-stats* db-stats}))
               e/*exports*  (e/exports)
-              navigator/*server-pretty (e/server {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (hfql/identify entity) "]"))})]
+              hyperfiddle.navigator6.rendering/*server-pretty (e/server {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (hfql/identify entity) "]"))})]
       (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
       (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser.css"}))
       (HfqlRoot sitemap entrypoints))))
