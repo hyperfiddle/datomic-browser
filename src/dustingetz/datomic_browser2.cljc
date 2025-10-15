@@ -121,7 +121,8 @@
               #(:db/id %)
 
               attribute-count
-              summarize-attr*]})
+              summarize-attr*
+              *]})
 
       'attribute-detail (hfql {attribute-detail {*  ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
                                                       ::hfql/Tooltip             `SemanticTooltip}
