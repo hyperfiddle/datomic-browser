@@ -91,10 +91,8 @@
        (let [attributes (cons :db/id (keys (d/touch entity)))
              reverse-refs (dx/reverse-refs (d/entity-db entity) (:db/id entity))
              reverse-attributes (->> reverse-refs (map first) (distinct) (map dx/invert-attribute))]
-         @(def _hfql_entity (hfql/hfql* (hyperfiddle.hfql1.analyzer/analyze {} (vec (concat attributes reverse-attributes)))))
-         #_(->> (concat attributes reverse-attributes)
-           (map hfql/lift)
-           (hfql/build-pull))))))
+         (hfql/hfql* (hyperfiddle.hfql1.analyzer/analyze {} (vec (concat attributes reverse-attributes)))) ; TODO cleanup – not user friendly
+         ))))
 
 (e/defn ConnectDatomic [datomic-uri]
   (e/server
