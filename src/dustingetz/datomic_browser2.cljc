@@ -114,7 +114,7 @@
                                         summarize-attr*
                                         :db/doc]}})
 
-      `attribute-entity-detail
+      'attribute-entity-detail
       (hfql {attribute-entity-detail ^{::hfql/Tooltip `SemanticTooltip}
              [^{::hfql/Render `EntityDbidCell}
               #(:db/id %)
@@ -122,33 +122,33 @@
               attribute-count
               summarize-attr*]})
 
-      `attribute-detail (hfql {attribute-detail ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
-                                                  ::hfql/Tooltip             `SemanticTooltip}
-                               [^{::hfql/link '(entity-detail %)}
-                                #(:db/id %)]})
+      'attribute-detail (hfql {attribute-detail {*  ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
+                                                      ::hfql/Tooltip             `SemanticTooltip}
+                                                 [^{::hfql/link '(entity-detail %)}
+                                                  #(:db/id %)]}})
 
-      `tx-detail (hfql {tx-detail [^{::hfql/link    '(entity-detail :e)
-                                     ::hfql/Tooltip `EntityTooltip}
-                                   #(:e %)
-                                   ^{::hfql/link    '(attribute-detail %)
-                                     ::hfql/Tooltip `EntityTooltip}
-                                   ^{::hfql/label :db/ident}
-                                   {:a :db/ident} ; FIXME
-                                   :v]})
+      'tx-detail (hfql {tx-detail {* [^{::hfql/link    '(entity-detail :e)
+                                        ::hfql/Tooltip `EntityTooltip}
+                                      #(:e %)
+                                      ^{::hfql/link    '(attribute-detail %)
+                                        ::hfql/Tooltip `EntityTooltip}
+                                      ^{::hfql/label :db/ident}
+                                      {:a :db/ident} ; FIXME
+                                      :v]}})
 
-      `entity-detail (hfql {entity-detail ^{::hfql/Tooltip `SemanticTooltip} ; TODO want link and Tooltip instead
+      'entity-detail (hfql {entity-detail ^{::hfql/Tooltip `SemanticTooltip} ; TODO want link and Tooltip instead
                             [^{::hfql/Render `EntityDbidCell}
                              #(:db/id %)]})
 
-      `entity-history (hfql {entity-history [:e
-                                             ^{::hfql/link '(attribute-detail %)
-                                               ::hfql/Tooltip `EntityTooltip}
-                                             {:a :db/ident} ; FIXME
-                                             :v
-                                             ^{::hfql/link    '(tx-detail %v)
-                                               ::hfql/Tooltip `EntityTooltip}
-                                             #(:tx %)
-                                             :added]})}))
+      'entity-history (hfql {entity-history {* [:e
+                                                ^{::hfql/link '(attribute-detail %)
+                                                  ::hfql/Tooltip `EntityTooltip}
+                                                {:a :db/ident} ; FIXME
+                                                :v
+                                                ^{::hfql/link    '(tx-detail %v)
+                                                  ::hfql/Tooltip `EntityTooltip}
+                                                #(:tx %)
+                                                :added]}})}))
 ;; (hfql [:db/ident])
 ;; (hfql/aliased-form (ns-name *ns*) :db/ident)
 
