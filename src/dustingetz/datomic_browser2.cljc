@@ -57,16 +57,18 @@
   (e/server (pprint-str (d/pull *db* ['*] value))))
 
 (e/defn ^::e/export SemanticTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
-  #_(e/server
-    (let [attribute (hfql/form edge)]
-      (cond (= :db/id attribute) (EntityTooltip entity edge value)
-            (qualified-keyword? value)
-            (let [[typ _ unique?] (dx/easy-attr *db* attribute)]
-              (cond
-                (= :db/id attribute) (EntityTooltip entity edge value)
-                (= :ref typ) (pprint-str (d/pull *db* ['*] value))
-                (= :identity unique?) (pprint-str (d/pull *db* ['*] [attribute #_(:db/ident (d/entity db a)) value])) ; resolve lookup ref
-                () nil))))))
+  (e/server
+    (let [attribute (hfql/symbolic-edge edge)]
+      (e/Reconcile
+        (cond (= :db/id attribute) (EntityTooltip entity edge value)
+              (qualified-keyword? value)
+              (let [[typ _ unique?] (dx/easy-attr *db* attribute)]
+                (e/Reconcile
+                  (cond
+                    (= :db/id attribute) (EntityTooltip entity edge value)
+                    (= :ref typ) (pprint-str (d/pull *db* ['*] value))
+                    (= :identity unique?) (pprint-str (d/pull *db* ['*] [attribute #_(:db/ident (d/entity db a)) value])) ; resolve lookup ref
+                    () nil))))))))
 
 (e/defn ^::e/export SummarizeDatomicAttribute [_entity edge _value] ; FIXME props is a custom hyperfiddle type
   (e/server
@@ -115,7 +117,8 @@
                                         :db/doc]}})
 
       'attribute-entity-detail
-      (hfql {attribute-entity-detail ^{::hfql/Tooltip `SemanticTooltip}
+      (hfql {attribute-entity-detail ^{::hfql/Tooltip `SemanticTooltip
+                                       ::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute}
              [^{::hfql/Render `EntityDbidCell}
               #(:db/id %)
 
