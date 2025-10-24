@@ -164,5 +164,5 @@
               e/*exports*  (e/exports)
               hyperfiddle.navigator6.rendering/*server-pretty (e/server {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (hfql/identify entity) "]"))})]
       (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
-      (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser.css"}))
+      (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
       (HfqlRoot sitemap entrypoints))))
