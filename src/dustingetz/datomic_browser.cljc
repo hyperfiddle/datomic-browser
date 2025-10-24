@@ -2,7 +2,7 @@
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
             [hyperfiddle.navigator4 :as navigator :refer [HfqlRoot *search]]
-            [hyperfiddle.router4 :as r]
+            [hyperfiddle.router5 :as r]
             [hyperfiddle.electric-dom3 :as dom]
             [dustingetz.loader :refer [Loader]]
             [dustingetz.str :refer [pprint-str]]
