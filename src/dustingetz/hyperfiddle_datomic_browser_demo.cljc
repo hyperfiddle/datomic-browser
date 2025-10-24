@@ -1,6 +1,6 @@
 (ns dustingetz.hyperfiddle-datomic-browser-demo
   (:require
-   [dustingetz.datomic-browser :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]]
+   [dustingetz.datomic-browser2 :refer [DatomicBrowser ConnectDatomic #?(:clj datomic-browser-sitemap)]]
 
    [hyperfiddle.electric3 :as e]
    [hyperfiddle.electric-dom3 :as dom]
@@ -12,11 +12,11 @@
               e/http-request (e/server ring-request)]
       (dom/div (dom/props {:style {:display "contents"}}) ; mandatory wrapper div https://github.com/hyperfiddle/electric/issues/74
         (Hyperfiddle
-          {`dustingetz.datomic-browser/DatomicBrowser
+          {`dustingetz.datomic-browser2/DatomicBrowser
            (e/server (e/fn [] ; DI
                        (DatomicBrowser
                          (e/server datomic-browser-sitemap)
-                         '[(dustingetz.datomic-browser/attributes)]
+                         '[(dustingetz.datomic-browser2/attributes)]
                          (e/server (ConnectDatomic datomic-uri)))))})))))
 
 (defn hyperfiddle-demo-boot [ring-request datomic-uri]

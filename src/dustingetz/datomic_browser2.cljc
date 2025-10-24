@@ -1,4 +1,4 @@
-(ns dustingetz.datomic-browser
+(ns dustingetz.datomic-browser2
   (:require [hyperfiddle.electric3 :as e]
             [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
             [hyperfiddle.navigator5 :as navigator :refer [HfqlRoot *search]]
