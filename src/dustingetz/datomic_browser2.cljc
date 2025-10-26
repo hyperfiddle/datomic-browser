@@ -27,12 +27,14 @@
 #?(:clj (defn indexed-attribute? [db a] (true? (:db/index (dx/query-schema db a)))))
 
 #?(:clj (defn attribute-detail [a]
-          (->> (if (indexed-attribute? *db* a)
-                 (d/index-range *db* a (not-empty *local-search) nil) ; end is exclusive, can't pass *search twice
-                 (d/datoms *db* :aevt a))
-            (map :e)
-            (hfql/filtered) ; optimisation – tag as already filtered, disable auto in-memory search
-            (hfql/navigable (fn [_index ?e] (d/entity *db* ?e))))))
+          (let [search (not-empty *local-search)] ; capture dynamic for lazy take-while
+            (->> (if (indexed-attribute? *db* a)
+                   (d/index-range *db* a search nil) ; end is exclusive, can't pass *search twice
+                   (d/datoms *db* :aevt a))
+              (take-while #(if search (str/starts-with? (str (:v %)) search) true))
+              (map :e)
+              (hfql/filtered) ; optimisation – tag as already filtered, disable auto in-memory search
+              (hfql/navigable (fn [_index ?e] (d/entity *db* ?e)))))))
 
 #?(:clj (defn summarize-attr [db k] (->> (dx/easy-attr db k) (remove nil?) (map name) (str/join " "))))
 #?(:clj (defn summarize-attr* [?!a] (when ?!a (summarize-attr *db* (:db/ident ?!a)))))
