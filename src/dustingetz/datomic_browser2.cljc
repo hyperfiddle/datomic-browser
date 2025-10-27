@@ -42,7 +42,12 @@
 #?(:clj (defn datom->map [[e a v tx added]]
           (->> {:e e, :a a, :v v, :tx tx, :added added}
             (hfql/identifiable hash)
-            (hfql/navigable (fn [key value] (if (= :a key) (d/entity *db* a) value))))))
+            (hfql/navigable (fn [key value]
+                              (case key
+                                :e (d/entity *db* e)
+                                :a (d/entity *db* a)
+                                :v v #_(if (ref? a) (d/entity *db* v) v)
+                                :tx (d/entity *db* tx)))))))
 
 #?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log *conn*) e (inc e)) (into [] (comp (mapcat :data) (map datom->map))))))
 
