@@ -11,6 +11,11 @@
                  :override-deps {com.hyperfiddle/hyperfiddle {:local/root "../hyperfiddle"}}}
            :prod {:extra-paths ["src-prod"]
                   :extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}}
+           :profile {:extra-deps {criterium/criterium {:mvn/version "0.4.6"}
+                                  com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.2.2"}}
+                     :jvm-opts ["-Djdk.attach.allowAttachSelf"
+                                "-XX:+UnlockDiagnosticVMOptions"
+                                "-XX:+DebugNonSafepoints"]}
            :build ; use `clj -X:prod:build build-client`, NOT -T!
            {:extra-paths ["src-build"]
             :ns-default  build
