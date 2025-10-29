@@ -144,7 +144,8 @@
       'attribute-detail (hfql {attribute-detail {*  ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
                                                       ::hfql/Tooltip             `SemanticTooltip}
                                                  [^{::hfql/link '(entity-detail %)}
-                                                  #(:db/id %)]}})
+                                                  #(:db/id %)
+                                                  *]}})
 
       'tx-detail (hfql {tx-detail {* [^{::hfql/link    '(entity-detail :e) ; FIXME crash with unserializable :e
                                         ::hfql/Tooltip `EntityTooltip}
@@ -157,7 +158,8 @@
 
       'entity-detail (hfql {entity-detail ^{::hfql/Tooltip `SemanticTooltip} ; TODO want link and Tooltip instead
                             [^{::hfql/Render `EntityDbidCell}
-                             #(:db/id %)]})
+                             #(:db/id %)
+                             *]})
 
       'entity-history (hfql {entity-history {* [^{::hfql/Tooltip `EntityTooltip} ; No need for a link on :e, it would always point to the same page.
                                                 #(:e %)
