@@ -147,7 +147,7 @@
                                                   #(:db/id %)
                                                   *]}})
 
-      'tx-detail (hfql {tx-detail {* [^{::hfql/link    '(entity-detail :e) ; FIXME crash with unserializable :e
+      'tx-detail (hfql {tx-detail {* [^{::hfql/link    '(entity-detail :e)
                                         ::hfql/Tooltip `EntityTooltip}
                                       #(:e %)
                                       ^{::hfql/link    '(attribute-detail %)
@@ -161,7 +161,8 @@
                              #(:db/id %)
                              *]})
 
-      'entity-history (hfql {entity-history {* [^{::hfql/Tooltip `EntityTooltip} ; No need for a link on :e, it would always point to the same page.
+      'entity-history (hfql {entity-history {* [^{::hfql/link    '(entity-detail :e)
+                                                  ::hfql/Tooltip `EntityTooltip} ; No need for a link on :e, it would always point to the same page.
                                                 #(:e %)
                                                 ^{::hfql/link '(attribute-detail %)
                                                   ::hfql/Tooltip `EntityTooltip}
