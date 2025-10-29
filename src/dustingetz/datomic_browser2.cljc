@@ -94,7 +94,7 @@
      #_(hfql/resolved-form edge))))
 
 (e/defn ^::e/export EntityDbidCell [entity edge value] ; FIXME edge is a custom hyperfiddle type
-  (dom/span (dom/text (e/server (pr-str value)) " ") (r/link ['. [`(~'entity-history ~(hfql/identify entity))]] (dom/text "entity history"))))
+  (dom/span (dom/text (e/server (hfql/identify value)) " ") (r/link ['. [`(~'entity-history ~(hfql/identify entity))]] (dom/text "entity history"))))
 
 ;; #?(:clj (defmethod hfql/resolve datomic.query.EntityMap [entity-map & _opts] (list `entity-detail (:db/id entity-map))))
 ;; #?(:clj (defmethod hfql/resolve `find-var [[_ var-sym]] (find-var var-sym))) ; example
@@ -159,7 +159,7 @@
                             [^{::hfql/Render `EntityDbidCell}
                              #(:db/id %)]})
 
-      'entity-history (hfql {entity-history {* [^{::hfql/Tooltip `EntityTooltip}
+      'entity-history (hfql {entity-history {* [^{::hfql/Tooltip `EntityTooltip} ; No need for a link on :e, it would always point to the same page.
                                                 #(:e %)
                                                 ^{::hfql/link '(attribute-detail %)
                                                   ::hfql/Tooltip `EntityTooltip}
