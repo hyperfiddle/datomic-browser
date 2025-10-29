@@ -71,7 +71,7 @@
                (d/datoms history :vaet (:db/id e e))]))))
 
 (e/defn ^::e/export EntityTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
-  (e/server (pprint-str (d/pull *db* ['*] value))))
+  (e/server (pprint-str (d/touch value))))
 
 (e/defn ^::e/export SemanticTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
   (e/server
@@ -146,7 +146,7 @@
                                                  [^{::hfql/link '(entity-detail %)}
                                                   #(:db/id %)]}})
 
-      'tx-detail (hfql {tx-detail {* [^{::hfql/link    '(entity-detail :e)
+      'tx-detail (hfql {tx-detail {* [^{::hfql/link    '(entity-detail :e) ; FIXME crash with unserializable :e
                                         ::hfql/Tooltip `EntityTooltip}
                                       #(:e %)
                                       ^{::hfql/link    '(attribute-detail %)
@@ -159,7 +159,8 @@
                             [^{::hfql/Render `EntityDbidCell}
                              #(:db/id %)]})
 
-      'entity-history (hfql {entity-history {* [:e
+      'entity-history (hfql {entity-history {* [^{::hfql/Tooltip `EntityTooltip}
+                                                #(:e %)
                                                 ^{::hfql/link '(attribute-detail %)
                                                   ::hfql/Tooltip `EntityTooltip}
                                                 {:a :db/ident} ; FIXME
