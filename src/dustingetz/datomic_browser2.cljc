@@ -16,15 +16,6 @@
 (e/declare ^:dynamic *db*)
 (e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
 
-(comment
-  "Performance profiling, use :profile deps alias"
-  (require '[clj-async-profiler.core :as prof])
-  (prof/serve-ui 8082)
-  ;; (prof/serve-files 8082)
-  ;; Navigate to http://localhost:8082
-  (prof/start {:framebuf 10000000})
-  (prof/stop))
-
 #?(:clj (defn attributes []
           (->> (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [*db*]
                          :io-context ::attributes, :query-stats ::attributes})
