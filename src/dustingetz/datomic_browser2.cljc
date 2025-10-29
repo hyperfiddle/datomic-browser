@@ -16,6 +16,15 @@
 (e/declare ^:dynamic *db*)
 (e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
 
+(comment
+  "Performance profiling, use :profile deps alias"
+  (require '[clj-async-profiler.core :as prof])
+  (prof/serve-ui 8082)
+  ;; (prof/serve-files 8082)
+  ;; Navigate to http://localhost:8082
+  (prof/start {:framebuf 10000000})
+  (prof/stop))
+
 #?(:clj (defn attributes []
           (->> (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [*db*]
                          :io-context ::attributes, :query-stats ::attributes})
@@ -46,8 +55,9 @@
                               (case key
                                 :e (d/entity *db* e)
                                 :a (d/entity *db* a)
-                                :v v #_(if (ref? a) (d/entity *db* v) v)
-                                :tx (d/entity *db* tx)))))))
+                                :v (if (= :db.type/ref (:value-type (d/attribute *db* a))) (d/entity *db* v) v)
+                                :tx (d/entity *db* tx)
+                                :added value))))))
 
 #?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log *conn*) e (inc e)) (into [] (comp (mapcat :data) (map datom->map))))))
 
