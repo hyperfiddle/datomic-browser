@@ -155,7 +155,7 @@
       'entity-history (hfql {entity-history {* [^{::hfql/link    '(entity-detail :e)
                                                   ::hfql/Tooltip `EntityTooltip} ; No need for a link on :e, it would always point to the same page.
                                                 #(:e %)
-                                                ^{::hfql/link '(attribute-detail %)
+                                                ^{::hfql/link '(attribute-detail :a)
                                                   ::hfql/Tooltip `EntityTooltip}
                                                 {:a :db/ident} ; FIXME
                                                 :v
