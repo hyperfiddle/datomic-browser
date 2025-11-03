@@ -62,7 +62,7 @@
                (d/datoms history :vaet (:db/id e e))]))))
 
 (e/defn ^::e/export EntityTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
-  (e/server (pprint-str (d/touch value))))
+  (e/server (pprint-str (into {} (d/touch value))))) ; force conversion to map for pprint to wrap lines
 
 (e/defn ^::e/export SemanticTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
   (e/server
