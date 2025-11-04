@@ -130,6 +130,8 @@
 ;;                  summarize-attr*
 ;;                  :db/doc]}}))))
 
+#?(:clj (defn slow-query [] (Thread/sleep 3000) (d/entity *db* 0)))
+
 (comment
   (extend-type java.io.File
     hfql/Identifiable (-identify [^java.io.File o] `(clojure.java.io/file ~(.getPath o))))
@@ -143,7 +145,6 @@
     (hfql [java.io.File/.getName
            {java.io.File/.listFiles {* 2}}]
       (clojure.java.io/file "src"))) ; must use seed to recur properly
-
 
   (extend-protocol hfql/Identifiable
     clojure.lang.Namespace (-identify [ns] `(find-ns ~(ns-name ns)))
@@ -163,9 +164,11 @@
              (clojure.java.io/file "src"))
 
       'ns1 (hfql [ns-name
-                 meta
-                 {ns-publics {vals {* [str meta]}}}]
-            *ns*)
+                  meta
+                  {ns-publics {vals {* [str meta]}}}]
+             *ns*)
+
+      'slow-query (hfql {(slow-query) [*]})
 
       `attributes (hfql {(attributes) {* ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
                                            ::hfql/select '(attribute-entity-detail %)}
