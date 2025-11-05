@@ -193,8 +193,7 @@
       'attribute-detail (hfql {attribute-detail {*  ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
                                                       ::hfql/Tooltip             `SemanticTooltip}
                                                  [^{::hfql/link '(entity-detail %)}
-                                                  #(:db/id %)
-                                                  *]}})
+                                                  #(:db/id %)]}})
 
       'tx-detail (hfql {tx-detail {* [^{::hfql/link    '(entity-detail :e)
                                         ::hfql/Tooltip `EntityTooltip}
