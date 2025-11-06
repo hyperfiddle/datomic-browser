@@ -110,7 +110,7 @@
                  (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
                  (dom/pre (dom/text (pr-str error))))})))
 
-#?(:clj (defn slow-query [] (Thread/sleep 5000) (d/entity *db* 0)))
+#?(:clj (defn slow-query [] (Thread/sleep 5000) (d/entity *db* @(requiring-resolve 'dustingetz.mbrainz/lennon))))
 
 (comment
   (hfql/pull
@@ -141,9 +141,9 @@
                  {ns-publics {vals {* [str meta]}}}]
             *ns*)
 
-      `slow-query (hfql {(slow-query) [*]})
+      'slow-query (hfql {(slow-query) [*]})
 
-      `attributes (hfql {(attributes) {* ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
+      'attributes (hfql {(attributes) {* ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
                                            ::hfql/select '(attribute-entity-detail %)}
                                        [^{::hfql/link '(attribute-detail %)
                                           ::hfql/Tooltip `EntityTooltip}
@@ -151,7 +151,7 @@
 
                                         attribute-count
                                         summarize-attr*
-                                        :db/doc]}})
+                                        #_:db/doc]}})
 
       'attribute-entity-detail
       (hfql {attribute-entity-detail ^{::hfql/Tooltip `SemanticTooltip
