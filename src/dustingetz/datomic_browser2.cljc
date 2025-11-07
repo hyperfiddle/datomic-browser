@@ -6,6 +6,7 @@
             [hyperfiddle.navigator6.search :refer [*local-search]]
             [hyperfiddle.router5 :as r]
             [hyperfiddle.electric-dom3 :as dom]
+            [hyperfiddle.electric-forms5 :refer [Checkbox*]]
             [dustingetz.loader :refer [Loader]]
             [dustingetz.str :refer [pprint-str]]
             [clojure.string :as str]
@@ -191,11 +192,10 @@
               *db-stats* db-stats
               e/*bindings* (e/server (merge e/*bindings* {#'*conn* conn, #'*db* db, #'*db-stats* db-stats}))
               e/*exports*  (e/exports)
-              hyperfiddle.navigator6.rendering/*server-pretty (e/server {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (hfql/identify entity) "]"))})
-              #_#_dustingetz.loader/Offload (e/fn [f _] (e/Offload f))
-              ]
+              hyperfiddle.navigator6.rendering/*server-pretty (e/server {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (hfql/identify entity) "]"))})]
       (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
       (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
+      (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
       (HfqlRoot sitemap entrypoints))))
 
 
