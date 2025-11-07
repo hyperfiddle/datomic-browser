@@ -16,7 +16,7 @@
            (e/server (e/fn [] ; DI
                        (DatomicBrowser
                          (e/server datomic-browser-sitemap)
-                         '[dustingetz.datomic-browser2/attributes]
+                         ['attributes] ; default
                          (e/server (ConnectDatomic datomic-uri)))))})))))
 
 (defn hyperfiddle-demo-boot [ring-request datomic-uri]

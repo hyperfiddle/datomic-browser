@@ -16,13 +16,16 @@
 (e/declare ^:dynamic *db*)
 (e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
 
-#?(:clj (defn attributes []
+#?(:clj (defn attributes
+          "Datomic schema, with Datomic query diagnostics"
+          []
           (->> (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [*db*]
                          :io-context ::attributes, :query-stats ::attributes})
             (dx/query-stats-as-meta)
             (hfql/navigable (fn [_index ?e] (d/entity *db* ?e))))))
 
-#?(:clj (defn attribute-count [!e] (-> *db-stats* :attrs (get (:db/ident !e)) :count)))
+#?(:clj (defn attribute-count "hello"
+          [!e] (-> *db-stats* :attrs (get (:db/ident !e)) :count)))
 
 #?(:clj (defn indexed-attribute? [db a] (true? (:db/index (dx/query-schema db a)))))
 
@@ -110,40 +113,11 @@
                  (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
                  (dom/pre (dom/text (pr-str error))))})))
 
-#?(:clj (defn slow-query [] (Thread/sleep 5000) (d/entity *db* @(requiring-resolve 'dustingetz.mbrainz/lennon))))
-
-(comment
-  (hfql/pull
-    (hfql [java.io.File/.getName
-           java.io.File/.getAbsolutePath]
-      (clojure.java.io/file "src")))
-
-  (hfql/pull
-    (hfql [java.io.File/.getName
-           {java.io.File/.listFiles {* 2}}]
-      (clojure.java.io/file "src"))) ; must use seed to recur properly
-
-  (hfql/pull
-    (hfql [ns-name
-           meta
-           {ns-publics {vals {* [str meta]}}}]
-      *ns*))
-  )
+#?(:clj (defn slow-query [] (Thread/sleep 5000) (d/entity *db* 17592186066840 #_@(requiring-resolve 'dustingetz.mbrainz/lennon))))
 
 #?(:clj
    (def datomic-browser-sitemap
-     {'file (hfql [java.io.File/.getName
-                   {java.io.File/.listFiles {* ...}}]
-              (clojure.java.io/file "src"))
-
-      'ns (hfql [ns-name
-                 meta
-                 {ns-publics {vals {* [str meta]}}}]
-            *ns*)
-
-      'slow-query (hfql {(slow-query) [*]})
-
-      'attributes (hfql {(attributes) {* ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
+     {'attributes (hfql {(attributes) {* ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
                                            ::hfql/select '(attribute-entity-detail %)}
                                        [^{::hfql/link '(attribute-detail %)
                                           ::hfql/Tooltip `EntityTooltip}
@@ -192,9 +166,22 @@
                                                 ^{::hfql/link    '(tx-detail %v)
                                                   ::hfql/Tooltip `EntityTooltip}
                                                 #(:tx %)
-                                                :added]}})}))
-;; (hfql [:db/ident])
-;; (hfql/aliased-form (ns-name *ns*) :db/ident)
+                                                :added]}})
+
+      'slow-query
+      (hfql {(slow-query)
+             [*]})
+
+      'file
+      (hfql [java.io.File/.getName
+             {java.io.File/.listFiles {* ...}}]
+        (clojure.java.io/file "."))
+
+      'all-ns
+      (hfql {(all-ns)
+             {* [ns-name
+                 meta
+                 {ns-publics {vals {* [str meta]}}}]}})}))
 
 (e/defn DatomicBrowser [sitemap entrypoints conn]
   (let [db (e/server (e/Offload #(d/db conn)))
@@ -211,6 +198,44 @@
       (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
       (HfqlRoot sitemap entrypoints))))
 
+
+(comment
+  (require '[dustingetz.mbrainz :refer [test-db]])
+  #_@(requiring-resolve 'dustingetz.mbrainz/lennon)
+  (hfql/pull
+    (hfql [:db/id :artist/name]
+      (d/entity @test-db 17592186066840)))
+
+  (hfql/pull
+    (hfql [java.io.File/.getName
+           java.io.File/.getAbsolutePath]
+      (clojure.java.io/file ".")))
+
+  (hfql/pull
+    (hfql [java.io.File/.getName
+           {java.io.File/.listFiles {* 1}}]
+      (clojure.java.io/file ".")))
+
+  (hfql/pull
+    (hfql [ns-name
+           type]
+      *ns*))
+  )
+
+#?(:clj (extend-type java.io.File
+          hfql/Identifiable (-identify [^java.io.File o] `(clojure.java.io/file ~(.getPath o)))
+          hfql/Suggestable (-suggest [o] (hfql [java.io.File/.getName
+                                                java.io.File/.getPath
+                                                java.io.File/.getAbsolutePath
+                                                {java.io.File/.listFiles {* ...}}]))))
+
+#?(:clj (extend-type clojure.lang.Namespace
+          hfql/Identifiable (-identify [ns] `(find-ns ~(ns-name ns)))
+          hfql/Suggestable (-suggest [_] (hfql [ns-name ns-publics meta]))))
+
+#?(:clj (extend-type clojure.lang.Var
+          hfql/Identifiable (-identify [ns] `(find-var ~(symbol ns)))
+          hfql/Suggestable (-suggest [_] (hfql [symbol meta .isMacro .isDynamic .getTag]))))
 
 (comment
   (require '[dustingetz.mbrainz :refer [test-db]])
@@ -232,17 +257,5 @@
                  summarize-attr*
                  :db/doc]}}))))
 
-#?(:clj (extend-type java.io.File
-          hfql/Identifiable (-identify [^java.io.File o] `(clojure.java.io/file ~(.getPath o)))
-          hfql/Suggestable (-suggest [o] (hfql [java.io.File/.getName
-                                                java.io.File/.getPath
-                                                java.io.File/.getAbsolutePath
-                                                {java.io.File/.listFiles {* ...}}]))))
-
-#?(:clj (extend-type clojure.lang.Namespace
-          hfql/Identifiable (-identify [ns] `(find-ns ~(ns-name ns)))
-          hfql/Suggestable (-suggest [_] (hfql [ns-name ns-publics meta]))))
-
-#?(:clj (extend-type clojure.lang.Var
-          hfql/Identifiable (-identify [ns] `(find-var ~(symbol ns)))
-          hfql/Suggestable (-suggest [_] (hfql [symbol meta .isMacro .isDynamic .getTag]))))
+;; (hfql [:db/ident])
+;; (hfql/aliased-form (ns-name *ns*) :db/ident)
