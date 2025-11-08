@@ -119,56 +119,63 @@
 
 #?(:clj
    (def datomic-browser-sitemap
-     {'attributes (hfql {(attributes) {* ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
-                                           ::hfql/select '(attribute-entity-detail %)}
-                                       [^{::hfql/link '(attribute-detail %)
-                                          ::hfql/Tooltip `EntityTooltip}
-                                        #(:db/ident %)
-
-                                        attribute-count
-                                        summarize-attr*
-                                        #_:db/doc]}})
+     {'attributes
+      (hfql {(attributes)
+             {* ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
+                  ::hfql/select '(attribute-entity-detail %)}
+              [^{::hfql/link '(attribute-detail %)
+                 ::hfql/Tooltip `EntityTooltip}
+               #(:db/ident %)
+               attribute-count
+               summarize-attr*
+               #_:db/doc]}})
 
       'attribute-entity-detail
       (hfql {attribute-entity-detail ^{::hfql/Tooltip `SemanticTooltip
                                        ::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute}
              [^{::hfql/Render `EntityDbidCell}
               #(:db/id %)
-
               attribute-count
               summarize-attr*
               *]})
 
-      'attribute-detail (hfql {attribute-detail {*  ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
-                                                      ::hfql/Tooltip             `SemanticTooltip}
-                                                 [^{::hfql/link '(entity-detail %)}
-                                                  #(:db/id %)]}})
+      'attribute-detail
+      (hfql {attribute-detail
+             {* ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
+                  ::hfql/Tooltip `SemanticTooltip}
+              [^{::hfql/link '(entity-detail %)}
+               #(:db/id %)]}})
 
-      'tx-detail (hfql {tx-detail {* [^{::hfql/link    '(entity-detail :e)
-                                        ::hfql/Tooltip `EntityTooltip}
-                                      #(:e %)
-                                      ^{::hfql/link    '(attribute-detail %)
-                                        ::hfql/Tooltip `EntityTooltip}
-                                      ^{::hfql/label :db/ident}
-                                      {:a :db/ident} ; FIXME
-                                      :v]}})
+      'tx-detail
+      (hfql {tx-detail
+             {* [^{::hfql/link '(entity-detail :e)
+                   ::hfql/Tooltip `EntityTooltip}
+                 #(:e %)
+                 ^{::hfql/link '(attribute-detail %)
+                   ::hfql/Tooltip `EntityTooltip}
+                 ^{::hfql/label :db/ident}
+                 {:a :db/ident} ; FIXME
+                 :v]}})
 
-      'entity-detail (hfql {entity-detail ^{::hfql/Tooltip `SemanticTooltip} ; TODO want link and Tooltip instead
-                            [^{::hfql/Render `EntityDbidCell}
-                             #(:db/id %)
-                             *]})
+      'entity-detail
+      (hfql {entity-detail ^{::hfql/Tooltip `SemanticTooltip} ; TODO want link and Tooltip instead
+             [^{::hfql/Render `EntityDbidCell}
+              #(:db/id %)
+              *]})
 
-      'entity-history (hfql {entity-history {* [^{::hfql/link    '(entity-detail :e)
-                                                  ::hfql/Tooltip `EntityTooltip} ; No need for a link on :e, it would always point to the same page.
-                                                #(:e %)
-                                                ^{::hfql/link '(attribute-detail :a)
-                                                  ::hfql/Tooltip `EntityTooltip}
-                                                {:a :db/ident} ; FIXME
-                                                :v
-                                                ^{::hfql/link    '(tx-detail %v)
-                                                  ::hfql/Tooltip `EntityTooltip}
-                                                #(:tx %)
-                                                :added]}})
+      'entity-history
+      (hfql {entity-history
+             {* [^{::hfql/link '(entity-detail :e)
+                   ::hfql/Tooltip `EntityTooltip} ; No need for a link on :e, it would always point to the same page.
+                 #(:e %)
+                 ^{::hfql/link '(attribute-detail :a)
+                   ::hfql/Tooltip `EntityTooltip}
+                 {:a :db/ident} ; FIXME
+                 :v
+                 ^{::hfql/link '(tx-detail %v)
+                   ::hfql/Tooltip `EntityTooltip}
+                 #(:tx %)
+                 :added]}})
 
       'slow-query
       (hfql {(slow-query)
@@ -199,28 +206,47 @@
       (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
       (HfqlRoot sitemap entrypoints))))
 
-
 (comment
   (require '[dustingetz.mbrainz :refer [test-db]])
   #_@(requiring-resolve 'dustingetz.mbrainz/lennon)
-  (hfql/pull
-    (hfql [:db/id :artist/name]
-      (d/entity @test-db 17592186066840)))
 
-  (hfql/pull
-    (hfql [java.io.File/.getName
-           java.io.File/.getAbsolutePath]
-      (clojure.java.io/file ".")))
+  (def !lennon (d/entity @test-db 17592186066840))
+  (def q (hfql [:db/id :artist/name type] !lennon))
+  (hfql/pull q)
+
+  (def q (hfql [:db/id :artist/name type]))
+  (def x (hfql/seed {'% (d/entity @test-db 17592186066840)} q))
+  (hfql/pull x)
+
+  (hfql/pull (hfql [:db/id :artist/name] (d/entity @test-db 17592186066840)))
+
+
+  (def !x (clojure.java.io/file "../hyperfiddle/src"))
+
+  (def q (hfql [java.io.File/.getName
+                java.io.File/.getAbsolutePath
+                type]
+           !x))
+
+  (hfql/pull q)
+
+  (set! *print-namespace-maps* false)
+
+  (def q (hfql [java.io.File/.getName
+                {java.io.File/.listFiles {* 2}}]
+           !x))
+  (time (hfql/pull q))
 
   (hfql/pull
     (hfql [java.io.File/.getName
            {java.io.File/.listFiles {* 1}}]
       (clojure.java.io/file ".")))
 
-  (hfql/pull
-    (hfql [ns-name
-           type]
-      *ns*))
+  (def q (hfql {(all-ns)
+                {* [ns-name type]}}))
+
+  (def q (hfql {* [ns-name type]} (all-ns)))
+  (time (hfql/pull q))
   )
 
 #?(:clj (extend-type java.io.File
