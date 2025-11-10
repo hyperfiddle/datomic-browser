@@ -214,7 +214,20 @@
   (require '[dustingetz.mbrainz :refer [test-db lennon]])
 
   (def !lennon (d/entity @test-db lennon))
-  (def q (hfql [:db/id :artist/name type] !lennon))
+  (def q (hfql [:db/id
+                :artist/name
+                :artist/type] !lennon))
+  (hfql/pull q)
+
+  (def q (hfql [:db/id ; careful of ref lifting
+                :artist/name
+                :artist/type] !lennon))
+  (hfql/pull q)
+
+  (def q (hfql [:artist/name
+                {:track/_artists count}
+                type]
+           !lennon))
   (hfql/pull q)
 
   (def q (hfql [:db/id :artist/name type]))
