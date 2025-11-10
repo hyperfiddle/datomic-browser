@@ -28,13 +28,14 @@
 #?(:clj (defn attribute-count "hello"
           [!e] (-> *db-stats* :attrs (get (:db/ident !e)) :count)))
 
-#?(:clj (defn indexed-attribute? [db a] (true? (:db/index (dx/query-schema db a)))))
+#?(:clj (defn indexed-attribute? [db ident] (true? (:db/index (dx/query-schema db ident)))))
 
-#?(:clj (defn attribute-detail [a]
-          (let [search (not-empty *local-search)] ; capture dynamic for lazy take-while
-            (->> (if (indexed-attribute? *db* a)
-                   (d/index-range *db* a search nil) ; end is exclusive, can't pass *search twice
-                   (d/datoms *db* :aevt a))
+#?(:clj (defn attribute-detail [e]
+          (let [ident (:db/ident e)
+                search (not-empty *local-search)] ; capture dynamic for lazy take-while
+            (->> (if (indexed-attribute? *db* ident)
+                   (d/index-range *db* ident search nil) ; end is exclusive, can't pass *search twice
+                   (d/datoms *db* :aevt ident))
               (take-while #(if search (str/starts-with? (str (:v %)) search) true))
               (map :e)
               (hfql/filtered) ; optimisation – tag as already filtered, disable auto in-memory search
@@ -54,9 +55,9 @@
                                 :tx (d/entity *db* tx)
                                 :added value))))))
 
-#?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log *conn*) e (inc e)) (into [] (comp (mapcat :data) (map datom->map))))))
+#?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log *conn*) (:db/id e) (inc (:db/id e))) (into [] (comp (mapcat :data) (map datom->map))))))
 
-#?(:clj (defn entity-detail [e] (if (instance? datomic.query.EntityMap e) e (d/entity *db* e)))) ; FIXME wart
+#?(:clj (def entity-detail identity))
 #?(:clj (def attribute-entity-detail identity))
 
 #?(:clj (defn entity-history [e]
