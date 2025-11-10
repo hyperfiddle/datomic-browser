@@ -30,8 +30,8 @@
 
 #?(:clj (defn indexed-attribute? [db ident] (true? (:db/index (dx/query-schema db ident)))))
 
-#?(:clj (defn attribute-detail [e]
-          (let [ident (:db/ident e)
+#?(:clj (defn attribute-detail [!e]
+          (let [ident (:db/ident !e)
                 search (not-empty *local-search)] ; capture dynamic for lazy take-while
             (->> (if (indexed-attribute? *db* ident)
                    (d/index-range *db* ident search nil) ; end is exclusive, can't pass *search twice
@@ -55,16 +55,19 @@
                                 :tx (d/entity *db* tx)
                                 :added value))))))
 
-#?(:clj (defn tx-detail [e] (->> (d/tx-range (d/log *conn*) (:db/id e) (inc (:db/id e))) (into [] (comp (mapcat :data) (map datom->map))))))
+#?(:clj (defn tx-detail [!e] (->> (d/tx-range (d/log *conn*) (:db/id !e) (inc (:db/id !e)))
+                               (into [] (comp (mapcat :data) (map datom->map))))))
 
 #?(:clj (def entity-detail identity))
 #?(:clj (def attribute-entity-detail identity))
 
-#?(:clj (defn entity-history [e]
+#?(:clj (defn entity-history
+          "history datoms in connection with a Datomic entity, both inbound and outbound statements."
+          [!e]
           (let [history (d/history *db*)]
             (into [] (comp cat (map datom->map))
-              [(d/datoms history :eavt (:db/id e e)) ; resolve both data and object repr, todo revisit
-               (d/datoms history :vaet (:db/id e e))]))))
+              [(d/datoms history :eavt (:db/id !e !e)) ; resolve both data and object repr, todo revisit
+               (d/datoms history :vaet (:db/id !e !e))]))))
 
 (e/defn ^::e/export EntityTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
   (e/server (pprint-str (into {} (d/touch value))))) ; force conversion to map for pprint to wrap lines
