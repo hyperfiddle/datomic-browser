@@ -95,17 +95,21 @@
 #?(:clj (defn- entity-exists? [db eid] (and (some? eid) (seq (d/datoms db :eavt eid))))) ; d/entity always return an EntityMap, even for a non-existing :db/id
 #?(:clj (defmethod hfql/resolve `d/entity [[_ eid]] (when (entity-exists? *db* eid) (d/entity *db* eid))))
 
+#?(:clj (defn- best-human-friendly-identity [entity] (or #_(best-domain-level-human-friendly-identity entity) (:db/ident entity) (:db/id entity))))
+
 #?(:clj ; list all attributes of an entity – including reverse refs.
    (extend-type datomic.query.EntityMap
      hfql/Identifiable
-     (-identify [entity] (list `d/entity (or #_(best-domain-level-human-friendly-identity entity) (:db/ident entity) (:db/id entity))))
+     (-identify [entity] (list `d/entity (best-human-friendly-identity entity)))
      hfql/Suggestable
      (-suggest [entity]
        (let [attributes (cons :db/id (keys (d/touch entity)))
              reverse-refs (dx/reverse-refs (d/entity-db entity) (:db/id entity))
              reverse-attributes (->> reverse-refs (map first) (distinct) (map dx/invert-attribute))]
          (hfql/hfql* (hyperfiddle.hfql2.analyzer/analyze {} (vec (concat attributes reverse-attributes)))) ; TODO cleanup – not user friendly
-         ))))
+         ))
+     hfql/ComparableRepresentation
+     (-comparable [entity] (str (best-human-friendly-identity entity))))) ; Entities are not comparable, but their printable representation (e.g. :db/ident) is.
 
 (e/defn ConnectDatomic [datomic-uri]
   (e/server
@@ -200,7 +204,7 @@
               *db-stats* db-stats
               e/*bindings* (e/server (merge e/*bindings* {#'*conn* conn, #'*db* db, #'*db-stats* db-stats}))
               e/*exports*  (e/exports)
-              hyperfiddle.navigator6.rendering/*server-pretty (e/server {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (hfql/identify entity) "]"))})]
+              hyperfiddle.navigator6.rendering/*server-pretty (e/server {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (best-human-friendly-identity entity) "]"))})]
       (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
       (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
       (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
