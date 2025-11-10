@@ -103,7 +103,7 @@
      (-identify [entity] (list `d/entity (best-human-friendly-identity entity)))
      hfql/Suggestable
      (-suggest [entity]
-       (let [attributes (cons :db/id (keys (d/touch entity)))
+       (let [attributes (cons :db/id (dx/entity-attrs entity))
              reverse-refs (dx/reverse-refs (d/entity-db entity) (:db/id entity))
              reverse-attributes (->> reverse-refs (map first) (distinct) (map dx/invert-attribute))]
          (hfql/hfql* (hyperfiddle.hfql2.analyzer/analyze {} (vec (concat attributes reverse-attributes)))) ; TODO cleanup – not user friendly
