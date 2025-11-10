@@ -115,7 +115,7 @@
                  (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
                  (dom/pre (dom/text (pr-str error))))})))
 
-#?(:clj (defn slow-query [] (Thread/sleep 5000) (d/entity *db* 17592186066840 #_@(requiring-resolve 'dustingetz.mbrainz/lennon))))
+#?(:clj (defn slow-query [] (Thread/sleep 5000) (d/entity *db* @(requiring-resolve 'dustingetz.mbrainz/lennon))))
 
 #?(:clj
    (def datomic-browser-sitemap
@@ -207,18 +207,17 @@
       (HfqlRoot sitemap entrypoints))))
 
 (comment
-  (require '[dustingetz.mbrainz :refer [test-db]])
-  #_@(requiring-resolve 'dustingetz.mbrainz/lennon)
+  (require '[dustingetz.mbrainz :refer [test-db lennon]])
 
-  (def !lennon (d/entity @test-db 17592186066840))
+  (def !lennon (d/entity @test-db lennon))
   (def q (hfql [:db/id :artist/name type] !lennon))
   (hfql/pull q)
 
   (def q (hfql [:db/id :artist/name type]))
-  (def x (hfql/seed {'% (d/entity @test-db 17592186066840)} q))
+  (def x (hfql/seed {'% (d/entity @test-db lennon)} q))
   (hfql/pull x)
 
-  (hfql/pull (hfql [:db/id :artist/name] (d/entity @test-db 17592186066840)))
+  (hfql/pull (hfql [:db/id :artist/name] (d/entity @test-db lennon)))
 
 
   (def !x (clojure.java.io/file "../hyperfiddle/src"))
