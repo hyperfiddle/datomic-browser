@@ -91,13 +91,13 @@
 (e/defn ^::e/export EntityDbidCell [entity edge value] ; FIXME edge is a custom hyperfiddle type
   (dom/span (dom/text (e/server (hfql/identify value)) " ") (r/link ['. [`(~'entity-history ~(hfql/identify entity))]] (dom/text "entity history"))))
 
-;; #?(:clj (defmethod hfql/resolve datomic.query.EntityMap [entity-map & _opts] (list `entity-detail (:db/id entity-map))))
-;; #?(:clj (defmethod hfql/resolve `find-var [[_ var-sym]] (find-var var-sym))) ; example
+#?(:clj (defn- entity-exists? [db eid] (and (some? eid) (seq (d/datoms db :eavt eid))))) ; d/entity always return an EntityMap, even for a non-existing :db/id
+#?(:clj (defmethod hfql/resolve `d/entity [[_ eid]] (when (entity-exists? *db* eid) (d/entity *db* eid))))
 
 #?(:clj ; list all attributes of an entity – including reverse refs.
    (extend-type datomic.query.EntityMap
      hfql/Identifiable
-     (-identify [entity] (or #_(best-domain-level-human-friendly-identity entity) (:db/ident entity) (:db/id entity)))
+     (-identify [entity] (list `d/entity (or #_(best-domain-level-human-friendly-identity entity) (:db/ident entity) (:db/id entity))))
      hfql/Suggestable
      (-suggest [entity]
        (let [attributes (cons :db/id (keys (d/touch entity)))
