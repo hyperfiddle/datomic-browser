@@ -1,5 +1,6 @@
 (ns dustingetz.datomic-browser
-  (:require [hyperfiddle.electric3 :as e]
+  (:require [contrib.data :refer [get-with-residual-meta]]
+            [hyperfiddle.electric3 :as e]
             [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
             [hyperfiddle.navigator4 :as navigator :refer [HfqlRoot *search]]
             [hyperfiddle.router5 :as r]
@@ -14,11 +15,12 @@
 (e/declare ^:dynamic *db*)
 (e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
 
-#?(:clj (defn attributes []
-          (->> (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [*db*]
-                         :io-context ::attributes, :query-stats ::attributes})
-               (dx/query-stats-as-meta)
-               (hfql/navigable (fn [?e] (d/entity *db* ?e))))))
+#?(:clj (defn attributes "Datomic schema, with Datomic query diagnostics"
+          []
+          (let [x (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [*db*]
+                            :io-context ::attributes, :query-stats ::attributes})
+                x (get-with-residual-meta x :ret)]
+            (hfql/navigable (fn [?e] (d/entity *db* ?e)) x))))
 
 #?(:clj (defn attribute-count [!e] (-> *db-stats* :attrs (get (:db/ident !e)) :count)))
 
