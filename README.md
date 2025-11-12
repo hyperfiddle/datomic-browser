@@ -7,7 +7,7 @@
 
 ## Getting started
 
-Prerequsites
+Prerequisites
 * `java -version` modern version, we use `openjdk version "23.0.2"`
 * Clojure CLI https://clojure.org/guides/install_clojure
 
