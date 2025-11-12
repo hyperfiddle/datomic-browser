@@ -1,36 +1,30 @@
-# Electric v3 Starter App
+# Datomic-browser
 
 ## Links
 
-* Electric github with source code: https://github.com/hyperfiddle/electric
-* Tutorial: https://electric.hyperfiddle.net/
+* Hyperfiddle github: https://github.com/hyperfiddle/hyperfiddle
+* Datomic-browser public readme: https://github.com/hyperfiddle/datomic-browser
 
 ## Getting started
 
-* Shell: `clj -A:dev -X dev/-main`. 
-* Login instructions will be printed
-* REPL: `:dev` deps alias, `(dev/-main)` at the REPL to start dev build
-* App will start on http://localhost:8080
-* Electric root function: [src/electric_starter_app/main.cljc](src/electric_starter_app/main.cljc)
-* Hot code reloading works: edit -> save -> see app reload in browser
+Prerequsites
+* `java -version` modern version, we use `openjdk version "23.0.2"`
+* Clojure CLI https://clojure.org/guides/install_clojure
 
 ```shell
-# Prod build
-clj -X:build:prod build-client
-clj -M:prod -m prod
-
-# Uberjar (optional)
-clj -X:build:prod uberjar :build/jar-name "app.jar"
-java -cp target/app.jar clojure.main -m prod
-
-# Docker
-docker build --build-arg VERSION=$(git rev-parse HEAD) -t electric3-starter-app:latest .
-docker run --rm -it -p 8080:8080 electric3-starter-app:latest
-
-
-# Fly
-fly deploy --remote-only --build-arg VERSION=$(git rev-parse HEAD)
+git clone git@gitlab.com:hyperfiddle/datomic-browser.git
+cd datomic-browser
+./datomic_fixtures.sh                   # Download Datomic w/ mbrainz dataset
+./run_datomic.sh
+clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/mbrainz-1968-1973"'
+# Please sign up or login to activate: ...
+# INFO  dev: 👉 http://0.0.0.0:8080
 ```
 
+Repl: jack-in with `:dev` alias, then eval `(dev/-main {:datomic-uri "datomic:dev://localhost:4334/mbrainz-1968-1973"})`
+
 ## License
-Electric v3 is **free for bootstrappers and non-commercial use,** and otherwise available commercially under a business source available license, see: [Electric v3 license change](https://tana.pub/lQwRvGRaQ7hM/electric-v3-license-change) (2024 Oct). License activation is experimentally implemented through the Electric compiler, requiring **compile-time** login for **dev builds only**. That means: no license check at runtime, no login in prod builds, CI/CD etc, no licensing code even on the classpath at runtime. This is experimental, but seems to be working great so far. We do not currently require any account approval steps, just log in. There will be a EULA at some point once we finalize the non-commercial license, for now we are focused on enterprise deals which are different.
+* source available business license
+* free for individual use on local dev machines, login to activate (we are a business)
+* using in prod requires a license, DM dustingetz on slack.
+* still working out the details
