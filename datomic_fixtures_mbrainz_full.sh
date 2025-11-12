@@ -51,4 +51,7 @@ while ! timeout bash -c "echo > /dev/tcp/localhost/$PORT 2> /dev/null" 2> /dev/n
 datomic-pro/bin/datomic restore-db "file:$(pwd)/${mbrainz_backup_dir} datomic:dev://localhost:$PORT/mbrainz-full"
 kill $datomic_transactor_pid
 
+info "Cleaning up $mbrainz_backup_dir"
+rm -rf ${mbrainz_backup_dir}
+
 info "Sample dataset ready."

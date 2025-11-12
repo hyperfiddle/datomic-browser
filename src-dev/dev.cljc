@@ -15,7 +15,7 @@
    ;; #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :refer [electric-jetty9-ws-install]]) ; jetty9
    ))
 
-(comment (-main)) ; repl entrypoint
+(comment (-main {:datomic-uri (@(requiring-resolve 'dustingetz.mbrainz/mbrainz-uri!))})) ; repl entrypoint
 
 #?(:clj (defn next-available-port-from [start] (first (filter #(try (doto (java.net.ServerSocket. %) .close) % (catch Exception _ (println (format "Port %s already taken" %)) nil)) (iterate inc start)))))
 
