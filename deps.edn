@@ -1,4 +1,4 @@
-{:deps    {com.hyperfiddle/hyperfiddle {:mvn/version "v0-alpha-SNAPSHOT"}
+{:deps    {com.hyperfiddle/hyperfiddle {:mvn/version "v0-alpha-00120400"}
            com.datomic/peer {:mvn/version "1.0.7075"}
            ;; ring/ring {:mvn/version "1.14.1"} ; jetty 12, works but message payload size tunning API has changed, we need to upgrade it.
            ring/ring {:mvn/version "1.11.0"} ; to serve the app
@@ -7,10 +7,10 @@
  :paths   ["src" "resources"]
  :aliases {:dev {:extra-paths ["src-dev"]
                  :extra-deps {thheller/shadow-cljs {:mvn/version "2.26.2"}
-                              ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}
-                 :override-deps {com.hyperfiddle/hyperfiddle {:local/root "../hyperfiddle"}}}
+                              ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}}
            :prod {:extra-paths ["src-prod"]
                   :extra-deps {ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}}
+           :private {:override-deps {com.hyperfiddle/hyperfiddle {:local/root "../hyperfiddle"}}}
            :profile {:extra-deps {criterium/criterium {:mvn/version "0.4.6"}
                                   com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.2.2"}}
                      :jvm-opts ["-Djdk.attach.allowAttachSelf"
