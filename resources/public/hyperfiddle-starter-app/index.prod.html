@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>Hyperfiddle</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap" media="print" onload="this.media='all'" />
+        <noscript> <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap" /> </noscript>
+        <link rel="stylesheet" href="/hyperfiddle-starter-app/index.css" type="text/css" media="screen" />
+        <!-- Ensure cache busting on deployment – inject main.BUILD-HASH.js -->
+        <!-- $key$ is a template string. See src-prod/prod.cljc/wrap-prod-index-page -->
+        <script defer type="text/javascript" src="/hyperfiddle-starter-app/$:hyperfiddle.client.module/main$"></script>
+    </head>
+    <body></body>
+</html>

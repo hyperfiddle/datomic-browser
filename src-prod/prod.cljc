@@ -1,7 +1,7 @@
 (ns prod
   #?(:cljs (:require-macros [prod :refer [comptime-resource]]))
   (:require
-   electric-starter-app.main
+   [dustingetz.hyperfiddle-datomic-browser-demo :refer [hyperfiddle-demo-boot]]
 
    #?(:clj [ring.adapter.jetty :as ring])
    #?(:clj [ring.util.response :as ring-response])
@@ -22,7 +22,7 @@
 (declare wrap-prod-index-page wrap-ensure-cache-bust-on-server-deployment)
 
 #?(:clj ; server entrypoint
-   (defn -main [& {:strs [] :as args}] ; clojure.main entrypoint, args are strings
+   (defn -main [& {:strs [datomic-uri http-port] :as args}] ; clojure.main entrypoint, args are strings
      (let [config
            ;; Client and server versions must match in prod (dev is not concerned)
            ;; `src-build/build.clj` will compute the common version and store it in `resources/electric-manifest.edn`
@@ -31,10 +31,10 @@
            ;; The client's version is injected in the compiled .js file.
            (merge
              (comptime-resource "electric-manifest.edn")
-             {:host "0.0.0.0", :port 8080,
+             {:host "0.0.0.0", :port (or (some-> http-port parse-long) 8080),
               :resources-path "public"
               ;; shadow-cljs build manifest path, to get the fingerprinted main.sha1.js file to ensure cache invalidation
-              :manifest-path "public/electric_starter_app/js/manifest.edn"})]
+              :manifest-path "public/hyperfiddle-starter-app/js/manifest.edn"})]
        (log/info (pr-str config))
        (assert (string? (:hyperfiddle/electric-user-version config)))
        (ring/run-jetty
@@ -44,7 +44,7 @@
            (wrap-content-type)
            (wrap-not-modified)
            (wrap-ensure-cache-bust-on-server-deployment)
-           (electric-ring/wrap-electric-websocket (fn [ring-request] (electric-starter-app.main/electric-boot ring-request)))
+           (electric-ring/wrap-electric-websocket (fn [ring-request] (hyperfiddle-demo-boot ring-request datomic-uri)))
            (electric-ring/wrap-reject-stale-client config) ; ensures electric client and servers stays in sync.
            (wrap-params))
          {:host (:host config), :port (:port config), :join? false
@@ -65,7 +65,7 @@
    (defn ^:export -main []
      ;; client-side electric process boot happens here
      ((electric-client/reload-when-stale ; hard-reload the page to fetch new assets when a new server version is deployed
-        (electric-starter-app.main/electric-boot nil))  ; boot client-side Electric process
+        (hyperfiddle-demo-boot nil nil))  ; boot client-side Electric process
       #(js/console.log "Reactor success:" %)
       #(js/console.error "Reactor failure:" %))))
 
@@ -102,7 +102,7 @@
      (fn [ring-req]
        (assert (string? (:resources-path config)))
        (assert (string? (:manifest-path config)))
-       (if-let [response (ring-response/resource-response (str (:resources-path config) "/electric_starter_app/index.prod.html"))]
+       (if-let [response (ring-response/resource-response (str (:resources-path config) "/hyperfiddle-starter-app/index.prod.html"))]
          (if-let [module (get-compiled-javascript-modules (:manifest-path config))]
            (-> (ring-response/response (template (slurp (:body response)) (merge config module)))
              (ring-response/content-type "text/html")
