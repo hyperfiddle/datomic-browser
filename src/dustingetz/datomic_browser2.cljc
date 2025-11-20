@@ -18,6 +18,7 @@
 (e/declare ^:dynamic *conn*)
 (e/declare ^:dynamic *db*)
 (e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
+(e/declare ^:dynamic *filter-predicate*) ; for d/filter
 
 #?(:clj (defn databases []
           (when (= "*" (dx/datomic-uri-db-name *uri*)) ; security
@@ -126,7 +127,15 @@
    (extend-type datomic.db.Db
      hfql/Identifiable
      (-identify [db] (when-let [nm (db-name db)]
-                       `(d/db ~nm #_*uri* #_(d/basis-t db) #_(d/as-of-t db) #_(d/since-t db) #_(d/is-history db) #_(d/is-filtered db)))) ; what information is sensitive in this URL?
+                       (let [id `(d/db ~nm)
+                             ;; following db transformations are commutative, they can be applied in any order.
+                             id (if (d/is-history db) `(d/history ~id) id)
+                             id (if (d/is-filtered db) `(d/filter ~id) id) ; resolving will require DI to reconstruct the predicate
+                             id (if (d/since-t db) `(d/since ~id ~(d/since-t db)) id)
+                             id (if (d/as-of-t db) `(d/as-of ~id ~(d/as-of-t db)) id)
+                             ;; datomic-uri is security-sensitive and is not part of db's identity. Resolving will required DI.
+                             ]
+                         id)))
      hfql/ComparableRepresentation
      (-comparable [db] (db-name db))))
 
@@ -158,6 +167,11 @@
           (when-let [secure-db-name (security-select-db-name *uri* insecure-db-name)]
             (with-meta (d/db (d/connect (dx/set-db-name-in-datomic-uri *uri* secure-db-name)))
               {::db-name secure-db-name}))))
+
+#?(:clj (defmethod hfql/resolve `d/history [[_ db]] (d/history (hfql/resolve db))))
+#?(:clj (defmethod hfql/resolve `d/filter  [[_ db]] (d/filter (hfql/resolve db) *filter-predicate*)))
+#?(:clj (defmethod hfql/resolve `d/since [[_ db t]] (d/since (hfql/resolve db) t)))
+#?(:clj (defmethod hfql/resolve `d/as-of [[_ db t]] (d/as-of (hfql/resolve db) t)))
 
 (e/defn ConnectDatomic [datomic-uri]
   (e/server
