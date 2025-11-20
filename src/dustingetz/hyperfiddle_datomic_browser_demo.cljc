@@ -17,13 +17,13 @@
            (e/server (e/fn ; DI
                        ([] (DatomicBrowser
                              (e/server datomic-browser-sitemap)
-                             ['databases 'attributes] ; default
+                             ['databases 'db 'attributes] ; default
                              datomic-uri
                              (e/server (datomic-uri-db-name datomic-uri))))
                        ([db-name]
                         (DatomicBrowser
                           (e/server datomic-browser-sitemap)
-                          ['databases 'attributes] ; default
+                          ['databases 'db 'attributes] ; default
                           datomic-uri
                           db-name))))})))))
 
