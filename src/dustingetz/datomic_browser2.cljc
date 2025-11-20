@@ -19,12 +19,15 @@
 (e/declare ^:dynamic *db*)
 (e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
 
+(defn db-name [db] (::db-name (meta db)))
+
 #?(:clj (defn databases []
-          (when (= "*" (dx/datomic-uri-db-name *uri*)) ; security
-            (->> (d/get-database-names *uri*)
-              (hfql/navigable (fn [_index db-name]
-                                (with-meta (d/db (d/connect (dx/set-db-name-in-datomic-uri *uri* db-name)))
-                                  {::db-name db-name})))))))
+          (let [uri-db-name (dx/datomic-uri-db-name *uri*)
+                db-names (if (= "*" uri-db-name) ; security
+                           (d/get-database-names *uri*)
+                           (list uri-db-name))]
+            (->> db-names
+              (hfql/navigable (fn [_index db-name] (hfql/resolve `(d/db ~db-name))))))))
 
 #?(:clj (defn attributes "Datomic schema, with Datomic query diagnostics"
           []
@@ -121,8 +124,6 @@
          ))
      hfql/ComparableRepresentation
      (-comparable [entity] (str (best-human-friendly-identity entity))))) ; Entities are not comparable, but their printable representation (e.g. :db/ident) is.
-
-(defn db-name [db] (::db-name (meta db)))
 
 #?(:clj
    (extend-type datomic.db.Db
