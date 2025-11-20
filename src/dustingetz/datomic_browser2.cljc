@@ -14,9 +14,17 @@
             #?(:clj [datomic.api :as d])
             #?(:clj [dustingetz.datomic-contrib2 :as dx])))
 
+(e/declare ^:dynamic *uri*)
 (e/declare ^:dynamic *conn*)
 (e/declare ^:dynamic *db*)
 (e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
+
+#?(:clj (defn databases []
+          (when (= "*" (dx/datomic-uri-db-name *uri*)) ; security
+            (->> (d/get-database-names *uri*)
+              (hfql/navigable (fn [_index db-name]
+                                (with-meta (d/db (d/connect (dx/set-db-name-in-datomic-uri *uri* db-name)))
+                                  {::db-name db-name})))))))
 
 #?(:clj (defn attributes "Datomic schema, with Datomic query diagnostics"
           []
@@ -114,6 +122,23 @@
      hfql/ComparableRepresentation
      (-comparable [entity] (str (best-human-friendly-identity entity))))) ; Entities are not comparable, but their printable representation (e.g. :db/ident) is.
 
+(defn db-name [db] (::db-name (meta db)))
+
+#?(:clj
+   (extend-type datomic.db.Db
+     hfql/Identifiable
+     (-identify [db] (when-let [nm (db-name db)]
+                       `(d/db ~nm #_*uri* #_(d/basis-t db) #_(d/as-of-t db) #_(d/since-t db) #_(d/is-history db) #_(d/is-filtered db)))) ; what information is sensitive in this URL?
+     hfql/ComparableRepresentation
+     (-comparable [db] (db-name db))))
+
+#?(:clj (defmethod hfql/resolve `d/db [[_ db-name]]
+          (let [uri-db-name (dx/datomic-uri-db-name *uri*)]
+            (if (or (= db-name uri-db-name) (= "*" uri-db-name)) ; security
+              (with-meta (d/db (d/connect (dx/set-db-name-in-datomic-uri *uri* db-name)))
+                {::db-name db-name})
+              (throw (ex-info (str "Accessing database " db-name " is forbidden under the configured connection uri.") {:db-name db-name}))))))
+
 (e/defn ConnectDatomic [datomic-uri]
   (e/server
     (Loader #(d/connect datomic-uri)
@@ -126,7 +151,9 @@
 
 #?(:clj
    (def datomic-browser-sitemap
-     {'attributes
+     {
+      'databases (hfql {(databases) {* [^{::hfql/link ['.. [`(DatomicBrowser ~'%v) 'attributes]]} db-name d/db-stats]}}) ; TODO use '% instead of '%v and wire hf/resolve
+      'attributes
       (hfql {(attributes)
              {* ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
                   ::hfql/select '(attribute-entity-detail %)}
@@ -199,19 +226,24 @@
                  meta
                  {ns-publics {vals {* [str meta]}}}]}})}))
 
-(e/defn DatomicBrowser [sitemap entrypoints conn]
-  (let [db (e/server (e/Offload #(d/db conn)))
-        db-stats (e/server (e/Offload #(d/db-stats db)))]
-    (binding [*conn* conn
-              *db* db
-              *db-stats* db-stats
-              e/*bindings* (e/server (merge e/*bindings* {#'*conn* conn, #'*db* db, #'*db-stats* db-stats}))
-              e/*exports*  (e/exports)
-              hyperfiddle.navigator6.rendering/*server-pretty (e/server {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (best-human-friendly-identity entity) "]"))})]
-      (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
-      (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
-      (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
-      (HfqlRoot sitemap entrypoints))))
+(e/defn DatomicBrowser [sitemap entrypoints datomic-uri db-name] ; `datomic-uri` may end with `*`, allowing connection to any passed-in `db-name`.
+  (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
+  (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
+  (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
+  (binding [*uri* datomic-uri
+            e/*bindings* (e/server (merge e/*bindings* {#'*uri* datomic-uri}))
+            e/*exports* (e/exports)
+            hyperfiddle.navigator6.rendering/*server-pretty (e/server {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (best-human-friendly-identity entity) "]"))})]
+    (if (e/server (= "*" db-name (dx/datomic-uri-db-name datomic-uri))) ; no valid db-name available and *uri* allows "*". Can display: databases, all-ns, file, slow-query
+      (HfqlRoot (e/server (dissoc sitemap 'attributes)) (e/server (remove #{'attributes} entrypoints))) ; can't render attributes without a db-name to connect to
+      (let [conn (e/server (ConnectDatomic (dx/set-db-name-in-datomic-uri datomic-uri db-name))) ; secure – we know *uri* allows "*"
+            db (e/server (e/Offload #(d/db conn)))
+            db-stats (e/server (e/Offload #(d/db-stats db)))]
+        (binding [*conn* conn
+                  *db* db
+                  *db-stats* db-stats
+                  e/*bindings* (e/server (merge e/*bindings* {#'*conn* conn, #'*db* db, #'*db-stats* db-stats}))]
+          (HfqlRoot sitemap entrypoints)))))) ; all sitemap available, including attributes
 
 (comment
   (require '[dustingetz.mbrainz :refer [test-db lennon]])
