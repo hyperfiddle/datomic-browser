@@ -121,6 +121,13 @@
      hfql/ComparableRepresentation
      (-comparable [entity] (str (best-human-friendly-identity entity))))) ; Entities are not comparable, but their printable representation (e.g. :db/ident) is.
 
+#?(:clj ; list all attributes of an entity – including reverse refs.
+   (extend-type datomic.db.Datum
+     hfql/Suggestable
+     (-suggest [_] (hfql [:e :a :v :tx :added]))
+     hfql/ComparableRepresentation
+     (-comparable [datum] (into [] datum))))
+
 (defn db-name [db] (::db-name (meta db)))
 
 #?(:clj
