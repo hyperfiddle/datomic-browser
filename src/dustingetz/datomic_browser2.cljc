@@ -9,9 +9,10 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms5 :refer [Checkbox*]]
             [dustingetz.loader :refer [Loader]]
-            [dustingetz.str :refer [pprint-str]]
+            [dustingetz.str :refer [pprint-str blank->nil]]
             [clojure.string :as str]
             #?(:clj [datomic.api :as d])
+            #?(:clj [datomic.lucene])
             #?(:clj [dustingetz.datomic-contrib2 :as dx])))
 
 (e/declare ^:dynamic *uri*)
@@ -36,15 +37,26 @@
           [!e] (-> *db-stats* :attrs (get (:db/ident !e)) :count)))
 
 #?(:clj (defn indexed-attribute? [db ident] (true? (:db/index (dx/query-schema db ident)))))
+#?(:clj (defn fulltext-attribute? [db ident] (true? (:db/fulltext (dx/query-schema db ident)))))
+#?(:clj (defn fulltext-prefix-query [input] (some-> input (str) (datomic.lucene/escape-query) (str/replace #"^(\\\*)+" "") (blank->nil) (str "*"))))
 
 #?(:clj (defn attribute-detail [!e]
           (let [ident (:db/ident !e)
-                search (not-empty *local-search)] ; capture dynamic for lazy take-while
-            (->> (if (indexed-attribute? *db* ident)
-                   (d/index-range *db* ident search nil) ; end is exclusive, can't pass *search twice
-                   (d/datoms *db* :aevt ident))
-              (take-while #(if search (str/starts-with? (str (:v %)) search) true))
-              (map :e)
+                search (not-empty (str/trim (str *local-search))) ; capture dynamic for lazy take-while/filter
+                indexed? (indexed-attribute? *db* ident)
+                fulltext? (fulltext-attribute? *db* ident)
+                use-fulltext? (and fulltext? (not indexed?)) ; e.g. :track/artistCredit
+                fulltext-query (fulltext-prefix-query search)
+                eids (if (and use-fulltext? fulltext-query) ; prefer regular index lookup over fulltext search, if available. e.g. :artist/name
+                       (d/q '[:find [?e ...] :in $ ?a ?search :where [(fulltext $ ?a ?search) [[?e]]]] *db* ident fulltext-query)
+                       (if indexed?
+                         (->> (d/index-range *db* ident search nil) ; end is exclusive, can't pass *search twice
+                           (take-while #(if search (str/starts-with? (str (:v %)) search) true))
+                           (map :e))
+                         (->> (d/datoms *db* :aevt ident) ; e.g. :language/name
+                           (filter #(if search (str/starts-with? (str (:v %)) search) true))
+                           (map :e))))]
+            (->> eids
               (hfql/filtered) ; optimisation – tag as already filtered, disable auto in-memory search
               (hfql/navigable (fn [_index ?e] (d/entity *db* ?e)))))))
 
