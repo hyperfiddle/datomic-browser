@@ -15,14 +15,15 @@
    ;; #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :refer [electric-jetty9-ws-install]]) ; jetty9
    ))
 
-(comment (-main {:datomic-uri (@(requiring-resolve 'dustingetz.mbrainz/mbrainz-uri!))})) ; repl entrypoint
+(comment (-main)) ; repl entrypoint
 
 #?(:clj (defn next-available-port-from [start] (first (filter #(try (doto (java.net.ServerSocket. %) .close) % (catch Exception _ (println (format "Port %s already taken" %)) nil)) (iterate inc start)))))
 
 #?(:clj ; server entrypoint
    (defn -main [& args]
      (let [{:keys [datomic-uri http-port]} (first args)
-           http-port (or http-port (next-available-port-from 8080))]
+           http-port (or http-port (next-available-port-from 8080))
+           datomic-uri (or datomic-uri "datomic:dev://localhost:4334/*")] ; dev only default
        (assert (some? datomic-uri) "Missing `:datomic-uri`. See README.md")
        (assert (string? datomic-uri) "Invalid `:datomic-uri`. See README.md")
 
