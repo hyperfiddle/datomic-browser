@@ -12,3 +12,7 @@ set -eux -o pipefail
 # Without explicit bindAddress h2 will bind to 0.0.0.0 on fly for large mbrainz, but localhost for small mbrainz. No idea why.
 export JAVA_OPTS='-Dh2.bindAddress=localhost -XX:+UseG1GC -XX:MaxGCPauseMillis=50'
 ./state/datomic-pro/bin/transactor config/samples/dev-transactor-template.properties >>state/datomic.log 2>&1 &
+
+set +x
+sleep 1
+echo "Datomic is starting in background. You can proceed."
