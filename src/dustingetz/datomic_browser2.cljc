@@ -164,7 +164,7 @@
          uri-db-name
          ;; URI is pinned and db-name is pinned ⇒ db-name is allowed if it matches the uri's pinned one
          ;; ¬A ∧ ¬B
-         :else         ; truth table is covered
+         :else ;; truth table is covered
          ;; db-name is allowed if it matches the uri's pinned one
          (if (= db-name uri-db-name)
            db-name ;; db-name is allowed
@@ -288,7 +288,7 @@
                     (dissoc sitemap 'databases)
                     ;; uri is pinned and db-name doesn't match uri's ⇒ listing databases is forbidden and can't explore the given one ⇒ can't display 'databases nor 'db nor 'attributes
                     ;; ¬A ∧ ¬B
-                    :else ; truth table is covered
+                    :else ;; truth table is covered
                     (dissoc sitemap 'databases 'db 'attributes) ; throwing is also an option
                     ))))))
 
