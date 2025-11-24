@@ -43,20 +43,21 @@
 #?(:clj (defn attribute-detail [!e]
           (let [ident (:db/ident !e)
                 search (not-empty (str/trim (str *local-search))) ; capture dynamic for lazy take-while/filter
-                indexed? (indexed-attribute? *db* ident)
-                fulltext? (fulltext-attribute? *db* ident)
-                use-fulltext? (and fulltext? (not indexed?)) ; e.g. :track/artistCredit
                 fulltext-query (fulltext-prefix-query search)
-                eids (if (and use-fulltext? fulltext-query) ; prefer regular index lookup over fulltext search, if available. e.g. :artist/name
-                       (d/q '[:find [?e ...] :in $ ?a ?search :where [(fulltext $ ?a ?search) [[?e]]]] *db* ident fulltext-query)
-                       (if indexed?
+                entids (cond
+                         ;; prefer fulltext search, when available
+                         (and (fulltext-attribute? *db* ident) fulltext-query)
+                         (d/q '[:find [?e ...] :in $ ?a ?search :where [(fulltext $ ?a ?search) [[?e]]]] *db* ident fulltext-query)
+                         ;; indexed prefix search, when available
+                         (indexed-attribute? *db* ident)
                          (->> (d/index-range *db* ident search nil) ; end is exclusive, can't pass *search twice
                            (take-while #(if search (str/starts-with? (str (:v %)) search) true))
                            (map :e))
-                         (->> (d/datoms *db* :aevt ident) ; e.g. :language/name
-                           (filter #(if search (str/starts-with? (str (:v %)) search) true))
-                           (map :e))))]
-            (->> eids
+                         :else ; no available index
+                         (->> (d/datoms *db* :aevt ident) ; e.g. :language/name is a string but neither indexed nor fulltext
+                           (filter #(if search (str/starts-with? (str (:v %)) search) true)) ; can't use take-while – datoms are not ordered by v
+                           (map :e)))]
+            (->> entids
               (hfql/filtered) ; optimisation – tag as already filtered, disable auto in-memory search
               (hfql/navigable (fn [_index ?e] (d/entity *db* ?e)))))))
 
