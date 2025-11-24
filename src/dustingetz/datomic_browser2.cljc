@@ -85,9 +85,10 @@
           "history datoms in connection with a Datomic entity, both inbound and outbound statements."
           [!e]
           (let [history (d/history *db*)]
-            (into [] (comp cat (map datom->map))
-              [(d/datoms history :eavt (:db/id !e !e)) ; resolve both data and object repr, todo revisit
-               (d/datoms history :vaet (:db/id !e !e))]))))
+            (map datom->map (concat
+                              (d/datoms history :eavt (:db/id !e !e))
+                              (d/datoms history :vaet (:db/id !e !e)) ; reverse index
+                              )))))
 
 (e/defn ^::e/export EntityTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
   (e/server (pprint-str (into {} (d/touch value))))) ; force conversion to map for pprint to wrap lines
