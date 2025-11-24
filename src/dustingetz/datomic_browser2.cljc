@@ -65,7 +65,7 @@
 
 #?(:clj (defn datom->map [[e a v tx added]]
           (->> {:e e, :a a, :v v, :tx tx, :added added}
-            (hfql/identifiable hash)
+            (hfql/identifiable dx/datom-identity)
             (hfql/navigable (fn [key value]
                               (case key
                                 :e (d/entity *db* e)
