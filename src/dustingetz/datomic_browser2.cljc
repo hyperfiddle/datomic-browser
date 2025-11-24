@@ -91,7 +91,7 @@
                               )))))
 
 (e/defn ^::e/export EntityTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
-  (e/server (pprint-str (into {} (d/touch value))))) ; force conversion to map for pprint to wrap lines
+  (e/server (pprint-str (into {} (d/touch value)) :print-length 10 :print-level 2))) ; force conversion to map for pprint to wrap lines
 
 (e/defn ^::e/export SemanticTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
   (e/server
@@ -103,8 +103,9 @@
                 (e/Reconcile
                   (cond
                     (= :db/id attribute) (EntityTooltip entity edge value)
-                    (= :ref typ) (pprint-str (d/pull *db* ['*] value))
-                    (= :identity unique?) (pprint-str (d/pull *db* ['*] [attribute #_(:db/ident (d/entity db a)) value])) ; resolve lookup ref
+                    (= :ref typ) (pprint-str (d/pull *db* ['*] value) :print-length 10 :print-level 2)
+                    (= :identity unique?) (pprint-str (d/pull *db* ['*] [attribute #_(:db/ident (d/entity db a)) value]) ; resolve lookup ref
+                                            :print-length 10 :print-level 2)
                     () nil))))))))
 
 (e/defn ^::e/export SummarizeDatomicAttribute [_entity edge _value] ; FIXME props is a custom hyperfiddle type
