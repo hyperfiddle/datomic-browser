@@ -3,6 +3,7 @@
             [hyperfiddle.electric3 :as e]
             ;; [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
             [hyperfiddle.hfql2 :as hfql :refer [hfql]]
+            [hyperfiddle.hfql2.protocols :refer [Identifiable hfql-resolve Navigable Suggestable ComparableRepresentation]]
             [hyperfiddle.navigator6 :as navigator :refer [HfqlRoot]]
             [hyperfiddle.navigator6.search :refer [*local-search]]
             [hyperfiddle.router5 :as r]
@@ -24,7 +25,7 @@
 #?(:clj (defn databases []
           (when (= "*" (dx/datomic-uri-db-name *uri*)) ; security
             (->> (d/get-database-names *uri*)
-              (hfql/navigable (fn [_index db-name] (hfql/resolve `(d/db ~db-name))))))))
+              (hfql/navigable (fn [_index db-name] (hfql-resolve `(d/db ~db-name))))))))
 
 #?(:clj (defn attributes "Datomic schema, with Datomic query diagnostics"
           []
@@ -64,19 +65,7 @@
 #?(:clj (defn summarize-attr [db k] (->> (dx/easy-attr db k) (remove nil?) (map name) (str/join " "))))
 #?(:clj (defn summarize-attr* [?!a] (when ?!a (summarize-attr *db* (:db/ident ?!a)))))
 
-#?(:clj (defn datom->map [[e a v tx added]]
-          (->> {:e e, :a a, :v v, :tx tx, :added added}
-            (hfql/identifiable dx/datom-identity)
-            (hfql/navigable (fn [key value]
-                              (case key
-                                :e (d/entity *db* e)
-                                :a (d/entity *db* a)
-                                :v (if (= :db.type/ref (:value-type (d/attribute *db* a))) (d/entity *db* v) v)
-                                :tx (d/entity *db* tx)
-                                :added value))))))
-
-#?(:clj (defn tx-detail [!e] (->> (d/tx-range (d/log *conn*) (:db/id !e) (inc (:db/id !e)))
-                               (into [] (comp (mapcat :data) (map datom->map))))))
+#?(:clj (defn tx-detail [!e] (mapcat :data (d/tx-range (d/log *conn*) (:db/id !e) (inc (:db/id !e))))))
 
 #?(:clj (def entity-detail identity))
 #?(:clj (def attribute-entity-detail identity))
@@ -85,10 +74,10 @@
           "history datoms in connection with a Datomic entity, both inbound and outbound statements."
           [!e]
           (let [history (d/history *db*)]
-            (map datom->map (concat
-                              (d/datoms history :eavt (:db/id !e !e))
-                              (d/datoms history :vaet (:db/id !e !e)) ; reverse index
-                              )))))
+            (concat
+              (d/datoms history :eavt (:db/id !e !e))
+              (d/datoms history :vaet (:db/id !e !e)) ; reverse index
+              ))))
 
 (e/defn ^::e/export EntityTooltip [entity edge value] ; FIXME edge is a custom hyperfiddle type
   (e/server (pprint-str (into {} (d/touch value)) :print-length 10 :print-level 2))) ; force conversion to map for pprint to wrap lines
@@ -118,48 +107,60 @@
   (dom/span (dom/text (e/server (hfql/identify value)) " ") (r/link ['. [`(~'entity-history ~(hfql/identify entity))]] (dom/text "entity history"))))
 
 #?(:clj (defn- entity-exists? [db eid] (and (some? eid) (seq (d/datoms db :eavt eid))))) ; d/entity always return an EntityMap, even for a non-existing :db/id
-#?(:clj (defmethod hfql/resolve `d/entity [[_ eid]] (when (entity-exists? *db* eid) (d/entity *db* eid))))
+#?(:clj (defmethod hfql-resolve `d/entity [[_ eid]] (when (entity-exists? *db* eid) (d/entity *db* eid))))
 
 #?(:clj (defn- best-human-friendly-identity [entity] (or #_(best-domain-level-human-friendly-identity entity) (:db/ident entity) (:db/id entity))))
 
 #?(:clj ; list all attributes of an entity – including reverse refs.
    (extend-type datomic.query.EntityMap
-     hfql/Identifiable
-     (-identify [entity] (list `d/entity (best-human-friendly-identity entity)))
-     hfql/Suggestable
-     (-suggest [entity]
+     Identifiable
+     (identify [entity] (list `d/entity (best-human-friendly-identity entity)))
+     Suggestable
+     (suggest [entity]
        (let [attributes (cons :db/id (dx/entity-attrs entity))
              reverse-refs (dx/reverse-refs (d/entity-db entity) (:db/id entity))
              reverse-attributes (->> reverse-refs (map first) (distinct) (map dx/invert-attribute))]
          (hfql/hfql* (hyperfiddle.hfql2.analyzer/analyze {} (vec (concat attributes reverse-attributes)))) ; TODO cleanup – not user friendly
          ))
-     hfql/ComparableRepresentation
-     (-comparable [entity] (str (best-human-friendly-identity entity))))) ; Entities are not comparable, but their printable representation (e.g. :db/ident) is.
+     ComparableRepresentation
+     (comparable [entity] (str (best-human-friendly-identity entity))))) ; Entities are not comparable, but their printable representation (e.g. :db/ident) is.
 
 #?(:clj ; list all attributes of an entity – including reverse refs.
    (extend-type datomic.db.Datum
-     hfql/Suggestable
-     (-suggest [_] (hfql [:e :a :v :tx :added]))
-     hfql/ComparableRepresentation
-     (-comparable [datum] (into [] datum))))
+     Identifiable
+     (identify [datum] `(datomic.db/datum ~@(dx/datom-identity datum)))
+     Navigable
+     (nav [[e a v tx added] k _]
+       (case k
+         :e (d/entity *db* e)
+         :a (d/entity *db* a)
+         :v (if (= :db.type/ref (:value-type (d/attribute *db* a))) (d/entity *db* v) v)
+         :tx (d/entity *db* tx)
+         :added added))
+     Suggestable
+     (suggest [_] (hfql [:e :a :v :tx :added]))
+     ComparableRepresentation
+     (comparable [datum] (into [] datum))))
+
+#?(:clj (defmethod hfql-resolve `datomic.db/datum [[_ e a serialized-v tx added]] (dx/resolve-datom *db* e a serialized-v tx added)))
 
 (defn db-name [db] (::db-name (meta db)))
 
 #?(:clj
    (extend-type datomic.db.Db
-     hfql/Identifiable
-     (-identify [db] (when-let [nm (db-name db)]
-                       (let [id `(d/db ~nm)
-                             ;; following db transformations are commutative, they can be applied in any order.
-                             id (if (d/is-history db) `(d/history ~id) id)
-                             id (if (d/is-filtered db) `(d/filter ~id) id) ; resolving will require DI to reconstruct the predicate
-                             id (if (d/since-t db) `(d/since ~id ~(d/since-t db)) id)
-                             id (if (d/as-of-t db) `(d/as-of ~id ~(d/as-of-t db)) id)
-                             ;; datomic-uri is security-sensitive and is not part of db's identity. Resolving will required DI.
-                             ]
-                         id)))
-     hfql/ComparableRepresentation
-     (-comparable [db] (db-name db))))
+     Identifiable
+     (identify [db] (when-let [nm (db-name db)]
+                      (let [id `(d/db ~nm)
+                            ;; following db transformations are commutative, they can be applied in any order.
+                            id (if (d/is-history db) `(d/history ~id) id)
+                            id (if (d/is-filtered db) `(d/filter ~id) id) ; resolving will require DI to reconstruct the predicate
+                            id (if (d/since-t db) `(d/since ~id ~(d/since-t db)) id)
+                            id (if (d/as-of-t db) `(d/as-of ~id ~(d/as-of-t db)) id)
+                            ;; datomic-uri is security-sensitive and is not part of db's identity. Resolving will required DI.
+                            ]
+                        id)))
+     ComparableRepresentation
+     (comparable [db] (db-name db))))
 
 #?(:clj
    (defn security-select-db-name [datomic-uri db-name]
@@ -185,15 +186,15 @@
            db-name ;; db-name is allowed
            nil)))))
 
-#?(:clj (defmethod hfql/resolve `d/db [[_ insecure-db-name]]
+#?(:clj (defmethod hfql-resolve `d/db [[_ insecure-db-name]]
           (when-let [secure-db-name (security-select-db-name *uri* insecure-db-name)]
             (with-meta (d/db (d/connect (dx/set-db-name-in-datomic-uri *uri* secure-db-name)))
               {::db-name secure-db-name}))))
 
-#?(:clj (defmethod hfql/resolve `d/history [[_ db]] (d/history (hfql/resolve db))))
-#?(:clj (defmethod hfql/resolve `d/filter  [[_ db]] (d/filter (hfql/resolve db) *filter-predicate*)))
-#?(:clj (defmethod hfql/resolve `d/since [[_ db t]] (d/since (hfql/resolve db) t)))
-#?(:clj (defmethod hfql/resolve `d/as-of [[_ db t]] (d/as-of (hfql/resolve db) t)))
+#?(:clj (defmethod hfql-resolve `d/history [[_ db]] (d/history (hfql-resolve db))))
+#?(:clj (defmethod hfql-resolve `d/filter  [[_ db]] (d/filter (hfql-resolve db) *filter-predicate*)))
+#?(:clj (defmethod hfql-resolve `d/since [[_ db t]] (d/since (hfql-resolve db) t)))
+#?(:clj (defmethod hfql-resolve `d/as-of [[_ db t]] (d/as-of (hfql-resolve db) t)))
 
 (e/defn ConnectDatomic [datomic-uri]
   (e/server
@@ -390,19 +391,26 @@
   )
 
 #?(:clj (extend-type java.io.File
-          hfql/Identifiable (-identify [^java.io.File o] `(clojure.java.io/file ~(.getPath o)))
-          hfql/Suggestable (-suggest [o] (hfql [java.io.File/.getName
-                                                java.io.File/.getPath
-                                                java.io.File/.getAbsolutePath
-                                                {java.io.File/.listFiles {* ...}}]))))
+          Identifiable (identify [^java.io.File o] `(clojure.java.io/file ~(.getPath o)))
+          Suggestable (suggest [o] (hfql [java.io.File/.getName
+                                          java.io.File/.getPath
+                                          java.io.File/.getAbsolutePath
+                                          {java.io.File/.listFiles {* ...}}]))))
+
+#?(:clj (defmethod hfql-resolve 'clojure.java.io/file [[_ file-path-str]] (clojure.java.io/file file-path-str)))
 
 #?(:clj (extend-type clojure.lang.Namespace
-          hfql/Identifiable (-identify [ns] `(find-ns ~(ns-name ns)))
-          hfql/Suggestable (-suggest [_] (hfql [ns-name ns-publics meta]))))
+          Identifiable (identify [ns] `(find-ns ~(ns-name ns)))
+          Suggestable (suggest [_] (hfql [ns-name ns-publics meta]))))
+
+#?(:clj (defmethod hfql-resolve `find-ns [[_ ns-sym]] (find-ns ns-sym)))
 
 #?(:clj (extend-type clojure.lang.Var
-          hfql/Identifiable (-identify [ns] `(find-var ~(symbol ns)))
-          hfql/Suggestable (-suggest [_] (hfql [symbol meta .isMacro .isDynamic .getTag]))))
+          Identifiable (identify [ns] `(find-var ~(symbol ns)))
+          Suggestable (suggest [_] (hfql [symbol meta .isMacro .isDynamic .getTag]))))
+
+#?(:clj (defmethod hfql-resolve `find-var [[_ var-sym]] (find-var var-sym)))
+
 
 (comment
   (require '[dustingetz.mbrainz :refer [test-db]])
