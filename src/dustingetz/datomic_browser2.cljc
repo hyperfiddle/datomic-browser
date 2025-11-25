@@ -10,7 +10,7 @@
             [hyperfiddle.electric-dom3 :as dom]
             [hyperfiddle.electric-forms5 :refer [Checkbox*]]
             [dustingetz.loader :refer [Loader]]
-            [dustingetz.str :refer [pprint-str blank->nil]]
+            [dustingetz.str :refer [pprint-str blank->nil #?(:cljs format-number-human-friendly)]]
             [clojure.string :as str]
             #?(:clj [datomic.api :as d])
             #?(:clj [datomic.lucene])
@@ -105,6 +105,10 @@
 
 (e/defn ^::e/export EntityDbidCell [entity edge value] ; FIXME edge is a custom hyperfiddle type
   (dom/span (dom/text (e/server (hfql/identify value)) " ") (r/link ['. [`(~'entity-history ~(hfql/identify entity))]] (dom/text "entity history"))))
+
+(e/defn ^::e/export HumanFriendlyAttributeCount [entity edge value]
+  (e/client (dom/span (dom/props {:title (format-number-human-friendly value)})
+              (dom/text (format-number-human-friendly value :notation :compact :maximumFractionDigits 1)))))
 
 #?(:clj (defn- entity-exists? [db eid] (and (some? eid) (seq (d/datoms db :eavt eid))))) ; d/entity always return an EntityMap, even for a non-existing :db/id
 #?(:clj (defmethod hfql-resolve `d/entity [[_ eid]] (when (entity-exists? *db* eid) (d/entity *db* eid))))
@@ -220,6 +224,7 @@
               [^{::hfql/link '(attribute-detail %)
                  ::hfql/Tooltip `EntityTooltip}
                #(:db/ident %)
+               ^{::hfql/Render `HumanFriendlyAttributeCount}
                attribute-count
                summarize-attr*
                #_:db/doc]}})
