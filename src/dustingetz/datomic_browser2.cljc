@@ -122,10 +122,8 @@
      Suggestable
      (suggest [entity]
        (let [attributes (cons :db/id (dx/entity-attrs entity))
-             reverse-refs (dx/reverse-refs (d/entity-db entity) (:db/id entity))
-             reverse-attributes (->> reverse-refs (map first) (distinct) (map dx/invert-attribute))]
-         (hfql/hfql* (hyperfiddle.hfql2.analyzer/analyze {} (vec (concat attributes reverse-attributes)))) ; TODO cleanup – not user friendly
-         ))
+             reverse-attributes (->> (dx/reverse-refs (d/entity-db entity) (:db/id entity)) (map first) (distinct) (map dx/invert-attribute))]
+         (hfql/build-hfql (vec (concat attributes reverse-attributes)))))
      ComparableRepresentation
      (comparable [entity] (str (best-human-friendly-identity entity))))) ; Entities are not comparable, but their printable representation (e.g. :db/ident) is.
 
