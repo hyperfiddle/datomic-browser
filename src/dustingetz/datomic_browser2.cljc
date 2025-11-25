@@ -99,9 +99,9 @@
 
 (e/defn ^::e/export SummarizeDatomicAttribute [_entity edge _value] ; FIXME props is a custom hyperfiddle type
   (e/server
-    ((fn [attribute] (try (str/trimr (str attribute " " (summarize-attr *db* attribute))) (catch Throwable _)))
-     (hfql/symbolic-edge edge)
-     #_(hfql/resolved-form edge))))
+    ((fn [] ; IIFE for try/catch support – Electric 3 doesn't have try/catch yet.
+       (try (str/trim (str (hfql/describe-formatted edge) " " (summarize-attr *db* (hfql/symbolic-edge edge))))
+            (catch Throwable _))))))
 
 (e/defn ^::e/export EntityDbidCell [entity edge value] ; FIXME edge is a custom hyperfiddle type
   (dom/span (dom/text (e/server (hfql/identify value)) " ") (r/link ['. [`(~'entity-history ~(hfql/identify entity))]] (dom/text "entity history"))))
