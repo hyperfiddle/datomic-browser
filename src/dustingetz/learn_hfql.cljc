@@ -61,3 +61,24 @@
           {* [ns-name
               meta
               {ns-publics {vals {* [str meta]}}}]}})})
+
+(comment
+  (defn paginate [f limit sort-key]
+    (take limit (sort-by sort-key (f))))
+
+  (hfql/pull
+   (hfql {(paginate ^:symbolic all-ns 5 ^:symbolic ns-name)
+          {* [ns-name type]}}))
+
+  (hfql/pull
+   (hfql {(take 5 ^:symbolic (sort-by ns-name (all-ns)))
+          {* [ns-name type]}}))
+
+  (def q (hfql {(all-ns)
+                {* [ns-name type]}}))
+  (as-> (hfql/pull q) $
+    (get $ '(all-ns))
+    (sort-by 'ns-name $)
+    (take 5 $))
+
+  (->> (all-ns) (sort-by ns-name) (take 5)))
