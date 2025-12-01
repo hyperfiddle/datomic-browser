@@ -11,8 +11,8 @@
    #?(:clj [ring.middleware.params :refer [wrap-params]])
    #?(:clj [ring.middleware.resource :refer [wrap-resource]])
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
-   #?(:clj [hyperfiddle.electric-ring-adapter3 :refer [wrap-electric-websocket]]) ; jetty 10+
-   ;; #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :refer [electric-jetty9-ws-install]]) ; jetty9
+   ;; #?(:clj [hyperfiddle.electric-ring-adapter3 :refer [wrap-electric-websocket]]) ; jetty 10+
+   #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :refer [electric-jetty9-ws-install]]) ; jetty9
    ))
 
 (comment (-main)) ; repl entrypoint
@@ -37,13 +37,13 @@
                            (ring-response/content-type "text/html")))
                        (wrap-resource "public") ; 4. serve assets from disk.
                        (wrap-content-type) ; 3. boilerplate – to server assets with correct mime/type.
-                       (wrap-electric-websocket ; 2. install Electric server.
+                       #_(wrap-electric-websocket ; 2. install Electric server.
                          (fn [ring-request] (hyperfiddle-demo-boot ring-request datomic-uri))) ; boot server-side Electric process
-                       (wrap-params)) ; 1. boilerplate – parse request URL parameters.
+                       #_(wrap-params)) ; 1. boilerplate – parse request URL parameters.
                      {:host "0.0.0.0", :port http-port, :join? false
                       :configurator (fn [server] ; tune jetty server – larger websocket messages, longer timeout – this is a temporary tweak
-                                      #_(electric-jetty9-ws-install server "/" (fn [ring-request] (hyperfiddle-demo-boot ring-request datomic-uri)))
-                                      (org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
+                                      (electric-jetty9-ws-install server "/" (fn [ring-request] (hyperfiddle-demo-boot ring-request datomic-uri)))
+                                      #_(org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
                                         (.getHandler server)
                                         (reify org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer$Configurator
                                           (accept [_this _servletContext wsContainer]
