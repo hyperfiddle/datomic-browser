@@ -1,6 +1,6 @@
 (ns dustingetz.hyperfiddle-datomic-browser-demo
   (:require
-   [dustingetz.datomic-browser2 :refer [DatomicBrowser #?(:clj datomic-browser-sitemap)]]
+   [dustingetz.datomic-browser2 :refer [DatomicBrowser #_ConnectDatomic #?(:clj datomic-browser-sitemap)]]
    #?(:clj [dustingetz.datomic-contrib2 :refer [datomic-uri-db-name]])
 
    [hyperfiddle.electric3 :as e]
@@ -15,11 +15,18 @@
         (Hyperfiddle
           {`dustingetz.datomic-browser2/DatomicBrowser
            (e/server (e/fn ; DI
-                       ([] (DatomicBrowser
-                             (e/server datomic-browser-sitemap)
-                             ['databases 'db 'attributes] ; default
-                             datomic-uri
-                             (e/server (datomic-uri-db-name datomic-uri))))
+                       ([]
+                        ;; Browsing a given connection
+                        #_(DatomicBrowser
+                            (e/server datomic-browser-sitemap)
+                            ['attributes] ; default
+                            (e/server (ConnectDatomic datomic-uri)))
+                        ;; Browse by URI and eventually list databases if URI ends with `/*`
+                        (DatomicBrowser
+                          (e/server datomic-browser-sitemap)
+                          ['databases 'db 'attributes] ; default
+                          datomic-uri
+                          (e/server (datomic-uri-db-name datomic-uri))))
                        ([db-name]
                         (DatomicBrowser
                           (e/server datomic-browser-sitemap)

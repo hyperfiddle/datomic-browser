@@ -17,6 +17,7 @@
             #?(:clj [dustingetz.datomic-contrib2 :as dx])))
 
 (e/declare ^:dynamic *uri*)
+(e/declare ^:dynamic *db-name*)
 (e/declare ^:dynamic *conn*)
 (e/declare ^:dynamic *db*)
 (e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
@@ -311,32 +312,37 @@
                     (dissoc sitemap 'databases 'db 'attributes) ; throwing is also an option
                     ))))))
 
-(e/defn DatomicBrowser [sitemap entrypoints datomic-uri insecure-db-name] ; `datomic-uri` may end with `*`, allowing connection to any passed-in `db-name`.
-  (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
-  (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
-  (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
-  (e/server
-    (binding [*uri* datomic-uri
-              e/*bindings* (merge e/*bindings* {#'*uri* datomic-uri})
-              e/*exports* (e/exports)
-              hyperfiddle.navigator6.rendering/*server-pretty {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (best-human-friendly-identity entity) "]"))}]
-      (let [secure-db-name (security-select-db-name datomic-uri insecure-db-name)
-            allowed-pages (security-allowed-pages sitemap datomic-uri secure-db-name) ; TODO check
-            sitemap (select-keys sitemap allowed-pages)
-            entrypoints (filter allowed-pages entrypoints)]
-        (cond
-          (or (nil? secure-db-name) (= "*" secure-db-name)) ; Can't connect without a valid db-name, but we can still render some pages like 'databases (if allowed by security-allowed-pages) or 'all-ns.
-          (HfqlRoot sitemap entrypoints)
-          :else ; secure-db-name can only be "*", nil, or a valid db-name
-          (let [conn (e/server (ConnectDatomic (dx/set-db-name-in-datomic-uri datomic-uri secure-db-name)))
-                db (e/server (e/Offload #(d/db conn)))
-                db (e/server (vary-meta db assoc ::db-name secure-db-name))
-                db-stats (e/server (e/Offload #(d/db-stats db)))]
-            (binding [*conn* conn
-                      *db* db
-                      *db-stats* db-stats
-                      e/*bindings* (e/server (merge e/*bindings* {#'*conn* conn, #'*db* db, #'*db-stats* db-stats}))]
-              (HfqlRoot sitemap entrypoints))))))))
+(e/defn DatomicBrowser
+  ([sitemap entrypoints datomic-conn]
+   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
+   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
+   (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
+   (e/server
+     (binding [e/*exports* (e/exports)
+               hyperfiddle.navigator6.rendering/*server-pretty {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (best-human-friendly-identity entity) "]"))}]
+       (let [db (e/server (e/Offload #(d/db datomic-conn)))
+             db (e/server (vary-meta db assoc ::db-name *db-name*))
+             db-stats (e/server (e/Offload #(d/db-stats db)))]
+         (binding [*conn* datomic-conn
+                   *db* db
+                   *db-stats* db-stats
+                   e/*bindings* (e/server (merge e/*bindings* {#'*conn* datomic-conn, #'*db* db, #'*db-stats* db-stats}))]
+           (HfqlRoot sitemap entrypoints))))))
+  ([sitemap entrypoints datomic-uri insecure-db-name]
+   (e/server
+     (let [secure-db-name (security-select-db-name datomic-uri insecure-db-name)
+           allowed-pages (security-allowed-pages sitemap datomic-uri secure-db-name) ; TODO check
+           sitemap (select-keys sitemap allowed-pages)
+           entrypoints (filter allowed-pages entrypoints)]
+       (binding [*uri* datomic-uri
+                 *db-name* secure-db-name
+                 e/*bindings* (merge e/*bindings* {#'*uri* datomic-uri, #'*db-name* secure-db-name})]
+         (cond
+           (or (nil? secure-db-name) (= "*" secure-db-name)) ; Can't connect without a valid db-name, but we can still render some pages like 'databases (if allowed by security-allowed-pages) or 'all-ns.
+           (HfqlRoot sitemap entrypoints)
+           :else
+           (DatomicBrowser sitemap entrypoints
+             (e/server (ConnectDatomic (dx/set-db-name-in-datomic-uri datomic-uri secure-db-name))))))))))
 
 (comment
   (require '[dustingetz.mbrainz :refer [test-db lennon]])
