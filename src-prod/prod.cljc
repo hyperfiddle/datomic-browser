@@ -9,8 +9,8 @@
    #?(:clj [ring.middleware.params :refer [wrap-params]])
    #?(:clj [ring.middleware.resource :refer [wrap-resource]])
    #?(:clj [ring.middleware.content-type :refer [wrap-content-type]])
-   #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring])
-   #?(:cljs [hyperfiddle.electric-client3 :as electric-client])
+   ;; #?(:clj [hyperfiddle.electric-ring-adapter3 :as electric-ring]) ; jetty 10+
+   #?(:clj [hyperfiddle.electric-jetty9-ring-adapter3 :refer [electric-jetty9-ws-install]]) ; jetty 9
 
    #?(:clj clojure.edn)
    #?(:clj clojure.java.io)
@@ -44,20 +44,23 @@
            (wrap-content-type)
            (wrap-not-modified)
            (wrap-ensure-cache-bust-on-server-deployment)
-           (electric-ring/wrap-electric-websocket (fn [ring-request] (hyperfiddle-demo-boot ring-request datomic-uri)))
-           (electric-ring/wrap-reject-stale-client config) ; ensures electric client and servers stays in sync.
-           (wrap-params))
+           #_(electric-ring/wrap-electric-websocket (fn [ring-request] (hyperfiddle-demo-boot ring-request datomic-uri))) ; jetty 10+
+           #_(electric-ring/wrap-reject-stale-client config) ; ensures electric client and servers stays in sync. – jetty 10+
+           #_(wrap-params) ; jetty 10+
+           )
          {:host (:host config), :port (:port config), :join? false
           :configurator (fn [server] ; Tune limits
-                          (org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
+                          (electric-jetty9-ws-install server "/" (fn [ring-request] (hyperfiddle-demo-boot ring-request datomic-uri))) ; jetty 9
+                          ;; jetty 10+
+                          #_(org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer/configure
                             (.getHandler server)
                             (reify org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer$Configurator
                               (accept [_this _servletContext wsContainer]
                                 (.setIdleTimeout wsContainer (java.time.Duration/ofSeconds 60))
                                 (.setMaxBinaryMessageSize wsContainer (* 100 1024 1024))  ; 100M - for demo
                                 (.setMaxTextMessageSize wsContainer (* 100 1024 1024))))) ; 100M - for demo
-                          ;; Gzip served assets
-                          (.setHandler server (doto (new org.eclipse.jetty.server.handler.gzip.GzipHandler)
+                          ;; Gzip served assets – jetty 10+
+                          #_(.setHandler server (doto (new org.eclipse.jetty.server.handler.gzip.GzipHandler)
                                                 (.setMinGzipSize 1024)
                                                 (.setHandler (.getHandler server)))))}))))
 

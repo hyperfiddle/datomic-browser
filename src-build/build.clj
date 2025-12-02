@@ -38,8 +38,8 @@ application classpath to be available"
 (def class-dir "target/classes")
 
 (defn uberjar
-  [{:keys [optimize debug verbose ::jar-name, ::skip-client, version]
-    :or {optimize true, debug false, verbose false, skip-client false, version electric-user-version}
+  [{:keys [optimize debug verbose ::jar-name, ::skip-client, version, aliases]
+    :or {optimize true, debug false, verbose false, skip-client false, version electric-user-version, aliases [:prod]}
     :as args}]
   ; careful, shell quote escaping combines poorly with clj -X arg parsing, strings read as symbols
   (log/info 'uberjar (pr-str args))
@@ -50,8 +50,7 @@ application classpath to be available"
 
   (b/copy-dir {:target-dir class-dir :src-dirs ["src" "src-prod" "resources"]})
   (let [jar-name (or (some-> jar-name str) ; override for Dockerfile builds to avoid needing to reconstruct the name
-                   (format "hyperfiddle-starter-app-%s.jar" version))
-        aliases [:prod]]
+                   (format "hyperfiddle-starter-app-%s.jar" version))]
     (b/uber {:class-dir class-dir
              :uber-file (str "target/" jar-name)
              :basis     (b/create-basis {:project "deps.edn" :aliases aliases})})
