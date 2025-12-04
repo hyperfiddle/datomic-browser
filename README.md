@@ -4,7 +4,7 @@ This app is an easy way to get a generic web-based support/diagnostics UI for an
 
 This app is **150 LOC** + datomic helpers! See: [datomic-browser2.cljc](https://github.com/hyperfiddle/datomic-browser/blob/main/src/dustingetz/datomic_browser2.cljc)
 
-We built this as a demonstration of something that is difficult to build in Clojure/Script, but is a straightforward 500 LOC in Electric Clojure, and is now essentially trivialized by "Hyperfiddle". [Hyperfiddle](https://github.com/hyperfiddle/hyperfiddle) is an Electric library for building high fidelity enterprise frontends for any service, function or object.
+<!-- We built this as a demonstration of something that is difficult to build in Clojure/Script, but is a straightforward 500 LOC in Electric Clojure, and is now essentially trivialized by "Hyperfiddle". [Hyperfiddle](https://github.com/hyperfiddle/hyperfiddle) is an Electric library for building high fidelity enterprise frontends for any service, function or object. -->
 
 [![20250627_datomic_entity_browser.png](./docs/20250627_datomic_entity_browser.png)](./docs/20250627_datomic_entity_browser.png)
 
@@ -19,7 +19,8 @@ git clone git@gitlab.com:hyperfiddle/datomic-browser.git
 cd datomic-browser
 ./datomic_fixtures.sh                   # Download Datomic w/ mbrainz dataset
 ./run_datomic.sh
-clj -X:dev dev/-main :datomic-uri '"'datomic:dev://localhost:4334/*'"'
+clj -X:dev dev/-main
+clj -X:dev dev/-main :datomic-uri '"'datomic:dev://localhost:4334/*'"' # optional custom datomic uri
 # Please sign up or login to activate: ...
 # INFO  dev: 👉 http://0.0.0.0:8080
 ```
