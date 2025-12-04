@@ -1,4 +1,5 @@
-{:deps    {com.hyperfiddle/hyperfiddle {:mvn/version "v0-alpha-23e1e0fc"}
+{:deps    {org.clojure/clojure {:mvn/version "1.12.3"}
+           com.hyperfiddle/hyperfiddle {:mvn/version "v0-alpha-23e1e0fc"}
            com.datomic/peer {:mvn/version "1.0.7075"}
            ;; ring/ring {:mvn/version "1.14.1"} ; jetty 12, works but message payload size tunning API has changed, we need to upgrade it.
            ring/ring {:mvn/version "1.11.0"} ; to serve the app
