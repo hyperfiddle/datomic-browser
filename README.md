@@ -8,7 +8,25 @@ We built this as a demonstration of something that is difficult to build in Cloj
 
 [![20250627_datomic_entity_browser.png](./docs/20250627_datomic_entity_browser.png)](./docs/20250627_datomic_entity_browser.png)
 
-Datomic browser features:
+## Getting started
+
+Prerequisites
+* `java -version` modern version, we use `openjdk version "23.0.2"`
+* Clojure CLI https://clojure.org/guides/install_clojure
+
+```shell
+git clone git@gitlab.com:hyperfiddle/datomic-browser.git
+cd datomic-browser
+./datomic_fixtures.sh                   # Download Datomic w/ mbrainz dataset
+./run_datomic.sh
+clj -X:dev dev/-main
+# Please sign up or login to activate: ...
+# INFO  dev: 👉 http://0.0.0.0:8080
+```
+
+Repl: jack-in with `:dev` alias, then eval `(dev/-main)`
+
+## Features
 
 * **large Datomic databases** and large query results (50k+ result count)
 * **monitor and kill slow queries from very large databases** -- coming very soon, currently in test
@@ -36,24 +54,6 @@ Datomic browser features:
 * Datomic Onprem, Client API: possible, contact us
 * Datomic Cloud, Client API: possible, contact us
 * Datomic Cloud, Ions: unsupported, Electric uses a websocket, afaik nobody has attempted running Electric in an Ion yet.
-
-## Getting started
-
-Prerequisites
-* `java -version` modern version, we use `openjdk version "23.0.2"`
-* Clojure CLI https://clojure.org/guides/install_clojure
-
-```shell
-git clone git@gitlab.com:hyperfiddle/datomic-browser.git
-cd datomic-browser
-./datomic_fixtures.sh                   # Download Datomic w/ mbrainz dataset
-./run_datomic.sh
-clj -X:dev dev/-main
-# Please sign up or login to activate: ...
-# INFO  dev: 👉 http://0.0.0.0:8080
-```
-
-Repl: jack-in with `:dev` alias, then eval `(dev/-main)`
 
 ## License
 * free for individual use on local dev machines, mandatory runtime login (we are a business)
