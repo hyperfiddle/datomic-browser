@@ -1,6 +1,7 @@
 (ns dev-jetty9 ; require :jetty9 deps alias
   (:require
    [dustingetz.hyperfiddle-datomic-browser-demo :refer [hyperfiddle-demo-boot]]
+   #?(:clj [dustingetz.datomic-contrib2 :refer [datomic-uri-db-name]])
 
    #?(:clj [shadow.cljs.devtools.api :as shadow-cljs-compiler])
    #?(:clj [shadow.cljs.devtools.server :as shadow-cljs-compiler-server])
@@ -24,6 +25,7 @@
            datomic-uri (or datomic-uri "datomic:dev://localhost:4334/*")] ; dev only default
        (assert (some? datomic-uri) "Missing `:datomic-uri`. See README.md")
        (assert (string? datomic-uri) "Invalid `:datomic-uri`. See README.md")
+       (assert (= "*" (datomic-uri-db-name datomic-uri)) "`:datomic-uri`. Must be a transactor URI (must ends with \"/*\")")
 
        (shadow-cljs-compiler-server/start!)
        (shadow-cljs-compiler/watch :dev)

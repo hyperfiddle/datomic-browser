@@ -196,14 +196,11 @@
                  (dom/h1 (dom/text "Datomic transactor not found, see Readme.md"))
                  (dom/pre (dom/text (pr-str error))))})))
 
-#?(:clj (defn slow-query [] (Thread/sleep 5000) (d/entity *db* @(requiring-resolve 'dustingetz.mbrainz/lennon))))
-
-(defn current-db [] *db*)
+;; #?(:clj (defn slow-query [] (Thread/sleep 5000) (d/entity *db* @(requiring-resolve 'dustingetz.mbrainz/lennon))))
 
 #?(:clj
    (def datomic-browser-sitemap
      {
-      'db (hfql {(current-db) [^{::hfql/link ['.. [`(DatomicBrowser ~'%v) 'attributes]]} db-name d/db-stats]})
       'databases (hfql {(databases) {* [^{::hfql/link ['.. [`(DatomicBrowser ~'%v) 'attributes]]} db-name d/db-stats]}}) ; TODO use '% instead of '%v and wire hf/resolve
       'attributes
       (hfql {(attributes)
@@ -263,64 +260,58 @@
                    ::hfql/Tooltip `EntityTooltip}
                  #(:tx %)
                  :added]}})
-
+      #_#_
       'slow-query
       (hfql {(slow-query)
              [*]})
 
+      #_#_
       'file
       (hfql [java.io.File/.getName
              {java.io.File/.listFiles {* ...}}]
         (clojure.java.io/file "."))
 
+      #_#_
       'all-ns
       (hfql {(all-ns)
              {* [ns-name
                  meta
-                 {ns-publics {vals {* [str meta]}}}]}})}))
+                 {ns-publics {vals {* [str meta]}}}]}})
+      }))
 
-(e/defn BrowseDatomicByConnection [sitemap entrypoints datomic-conn]
-  (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
-  (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
-  (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
+(e/defn InjectStyles []
+  (e/client
+    (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
+    (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
+    (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})))
+
+(e/defn BrowseDatomicDatabase [sitemap entrypoints db]
+  (InjectStyles)
   (e/server
     (binding [e/*exports* (e/exports)
               hyperfiddle.navigator6.rendering/*server-pretty {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (best-human-friendly-identity entity) "]"))}]
-      (let [db (e/server (e/Offload #(d/db datomic-conn)))
-            db-stats (e/server (e/Offload #(d/db-stats db)))]
-        (binding [*conn* datomic-conn
-                  *db* db
+      (let [db-stats (e/server (e/Offload #(d/db-stats db)))]
+        (binding [*db* db
                   *db-stats* db-stats
-                  e/*bindings* (e/server (merge e/*bindings* {#'*conn* datomic-conn, #'*db* db, #'*db-stats* db-stats}))]
+                  e/*bindings* (e/server (merge e/*bindings* {#'*db* db, #'*db-stats* db-stats}))]
           (Navigate sitemap entrypoints))))))
 
-(e/defn BrowseDatomicByURI [sitemap entrypoints datomic-uri & {:keys [allow-listing-and-browsing-all-dbs?]
-                                                               :or {allow-listing-and-browsing-all-dbs? false}}]
-  (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
-  (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
-  (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
+(e/defn BrowseDatomicByConnection [sitemap entrypoints datomic-conn]
   (e/server
-    (binding [e/*exports* (e/exports)
-              hyperfiddle.navigator6.rendering/*server-pretty {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (best-human-friendly-identity entity) "]"))}]
-      (if (= "*" (dx/datomic-uri-db-name datomic-uri)) ; we don't know which db to connect to, but we can still list databases.
-        (binding [*uri* datomic-uri
-                  e/*bindings* (e/server (merge e/*bindings* {#'*uri* datomic-uri}))]
-          (Navigate sitemap entrypoints))
-        (let [datomic-conn (e/server (ConnectDatomic datomic-uri))
-              db (e/server (e/Offload #(d/db datomic-conn)))
-              db-name (dx/datomic-uri-db-name datomic-uri)
-              db (e/server (vary-meta db assoc ::db-name db-name))
-              db-stats (e/server (e/Offload #(d/db-stats db)))]
-          (binding [*allow-listing-and-browsing-all-dbs* allow-listing-and-browsing-all-dbs?
-                    *uri* datomic-uri
-                    *db-name* db-name
-                    *conn* datomic-conn
-                    *db* db
-                    *db-stats* db-stats
-                    e/*bindings* (e/server (merge e/*bindings* {#'*uri* datomic-uri #'*conn* datomic-conn, #'*db* db, #'*db-stats* db-stats #'*db-name* db-name}))]
-            (Navigate sitemap entrypoints)))))))
+    (binding [*conn* datomic-conn
+              e/*bindings* (merge e/*bindings* {#'*conn* datomic-conn})]
+      (BrowseDatomicDatabase sitemap entrypoints (e/Offload #(d/db datomic-conn))))))
 
-
+(e/defn BrowseDatomicByURI [sitemap entrypoints datomic-uri]
+  (e/server
+    (let [db-name (dx/datomic-uri-db-name datomic-uri)]
+      (binding [*uri* datomic-uri
+                *db-name* db-name
+                e/*bindings* (e/server (merge e/*bindings* {#'*uri* datomic-uri, #'*db-name* db-name}))]
+        (if (= "*" db-name)
+          (do (InjectStyles)
+            (Navigate sitemap [^{::r/link ['..]} 'databases]))
+          (BrowseDatomicByConnection sitemap entrypoints (e/server (ConnectDatomic datomic-uri))))))))
 
 (comment
   (require '[dustingetz.mbrainz :refer [test-db lennon]])
