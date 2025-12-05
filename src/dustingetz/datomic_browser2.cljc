@@ -259,25 +259,7 @@
                  ^{::hfql/link '(tx-detail %v)
                    ::hfql/Tooltip `EntityTooltip}
                  #(:tx %)
-                 :added]}})
-      #_#_
-      'slow-query
-      (hfql {(slow-query)
-             [*]})
-
-      #_#_
-      'file
-      (hfql [java.io.File/.getName
-             {java.io.File/.listFiles {* ...}}]
-        (clojure.java.io/file "."))
-
-      #_#_
-      'all-ns
-      (hfql {(all-ns)
-             {* [ns-name
-                 meta
-                 {ns-publics {vals {* [str meta]}}}]}})
-      }))
+                 :added]}})}))
 
 (e/defn InjectStyles []
   (e/client
@@ -315,100 +297,17 @@
 
 (comment
   (require '[dustingetz.mbrainz :refer [test-db lennon]])
-
-  (def !lennon (d/entity @test-db lennon))
-  (def q (hfql [:db/id
-                :artist/name
-                :artist/type] !lennon))
-  (hfql/pull q)
-
-  (def q (hfql [:db/id ; careful of ref lifting
-                :artist/name
-                :artist/type] !lennon))
-  (hfql/pull q)
-
-  (def q (hfql [:artist/name
-                {:track/_artists count}
-                type]
-           !lennon))
-  (hfql/pull q)
-
-  (def q (hfql [:db/id :artist/name type]))
-  (def x (hfql/seed {'% (d/entity @test-db lennon)} q))
-  (hfql/pull x)
-
-  (hfql/pull (hfql [:db/id :artist/name] (d/entity @test-db lennon)))
-
-
-  (def !x (clojure.java.io/file "../hyperfiddle/src"))
-
-  (def q (hfql [java.io.File/.getName
-                java.io.File/.getAbsolutePath
-                type]
-           !x))
-
-  (hfql/pull q)
-
   (set! *print-namespace-maps* false)
 
-  (def q (hfql [java.io.File/.getName
-                {java.io.File/.listFiles {* 2}}]
-           !x))
-  (time (hfql/pull q))
+  (def !lennon (d/entity @test-db lennon))
+  (def q (hfql {!lennon [:db/id ; careful of ref lifting, it lifts to EntityMap and REPL prints the map
+                         :artist/name
+                         :artist/type]}))
+  (hfql/pull q)
 
-  (hfql/pull
-    (hfql [java.io.File/.getName
-           {java.io.File/.listFiles {* 1}}]
-      (clojure.java.io/file ".")))
-
-  (def q (hfql {(all-ns)
-                {* [ns-name type]}}))
-
-  (def q (hfql {* [ns-name type]} (all-ns)))
-  (time (hfql/pull q))
-  )
-
-#?(:clj (extend-type java.io.File
-          Identifiable (identify [^java.io.File o] `(clojure.java.io/file ~(.getPath o)))
-          Suggestable (suggest [o] (hfql [java.io.File/.getName
-                                          java.io.File/.getPath
-                                          java.io.File/.getAbsolutePath
-                                          {java.io.File/.listFiles {* ...}}]))))
-
-#?(:clj (defmethod hfql-resolve 'clojure.java.io/file [[_ file-path-str]] (clojure.java.io/file file-path-str)))
-
-#?(:clj (extend-type clojure.lang.Namespace
-          Identifiable (identify [ns] `(find-ns ~(ns-name ns)))
-          Suggestable (suggest [_] (hfql [ns-name ns-publics meta]))))
-
-#?(:clj (defmethod hfql-resolve `find-ns [[_ ns-sym]] (find-ns ns-sym)))
-
-#?(:clj (extend-type clojure.lang.Var
-          Identifiable (identify [ns] `(find-var ~(symbol ns)))
-          Suggestable (suggest [_] (hfql [symbol meta .isMacro .isDynamic .getTag]))))
-
-#?(:clj (defmethod hfql-resolve `find-var [[_ var-sym]] (find-var var-sym)))
-
-
-(comment
-  (require '[dustingetz.mbrainz :refer [test-db]])
-
-  (hfql/pull
-    (hfql/seed {`hfql/*bindings* {#'*db* @test-db}}
-      (hfql {(attributes)
-             {* [:db/ident
-                 attribute-count
-                 summarize-attr*
-                 :db/doc]}})))
-
-  #_(def attributes' (binding [*db* test-db] (bound-fn* attributes)))
-
-  (binding [*db* @test-db]
-    (hfql/pull
-      (hfql {(attributes)
-             {* [:db/ident
-                 summarize-attr*
-                 :db/doc]}}))))
-
-;; (hfql [:db/ident])
-;; (hfql/aliased-form (ns-name *ns*) :db/ident)
+  (def q (hfql {!lennon
+                [:artist/name
+                 {:track/_artists count}
+                 type]}))
+  (time (hfql/pull q)) ; "Elapsed time: 1.173292 msecs"
+  := {'!lennon {:artist/name "Lennon", :track/_artists 30, 'type 'datomic.query.EntityMap}})
