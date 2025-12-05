@@ -22,11 +22,13 @@
 (e/declare ^:dynamic *db*)
 (e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
 (e/declare ^:dynamic *filter-predicate*) ; for d/filter
+(e/declare ^:dynamic *allow-listing-and-browsing-all-dbs*)
 
 #?(:clj (defn databases []
-          (let [database-names-list (if (= "*" (dx/datomic-uri-db-name *uri*))
-                                      (d/get-database-names *uri*) ; Throws if datomic uri doesn't end with `*`.
-                                      (list *db-name*))] ; only list current db
+          (let [database-names-list (cond
+                                      (= "*" (dx/datomic-uri-db-name *uri*)) (d/get-database-names *uri*) ; Throws if datomic uri doesn't end with `*`.
+                                      *allow-listing-and-browsing-all-dbs* (d/get-database-names (dx/set-db-name-in-datomic-uri *uri* "*"))
+                                      :else (list *db-name*))] ; only list current db
             (->> database-names-list
               (hfql/navigable (fn [_index db-name] (hfql-resolve `(d/db ~db-name))))))))
 
@@ -170,7 +172,7 @@
 #?(:clj (defmethod hfql-resolve `d/db [[_ db-name]]
           ;; Resolve db by name if it matches the injected datomic uri or if injected datomic uri allows all dbs to be listed (ends with `*`).
           (let [datomic-uri-db-name (dx/datomic-uri-db-name *uri*)]
-            (when (or (= "*" datomic-uri-db-name) (= db-name datomic-uri-db-name))
+            (when (or (= "*" datomic-uri-db-name) (= db-name datomic-uri-db-name) *allow-listing-and-browsing-all-dbs*)
               (with-meta (d/db (d/connect (dx/set-db-name-in-datomic-uri *uri* db-name)))
                 {::db-name db-name})))))
 
@@ -285,41 +287,33 @@
                   e/*bindings* (e/server (merge e/*bindings* {#'*conn* datomic-conn, #'*db* db, #'*db-stats* db-stats}))]
           (Navigate sitemap entrypoints))))))
 
-(e/defn BrowseDatomicURIWithPinnedDb [sitemap entrypoints datomic-uri]
+(e/defn BrowseDatomicByURI [sitemap entrypoints datomic-uri & {:keys [allow-listing-and-browsing-all-dbs?]
+                                                               :or {allow-listing-and-browsing-all-dbs? false}}]
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
   (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
   (e/server
     (binding [e/*exports* (e/exports)
               hyperfiddle.navigator6.rendering/*server-pretty {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (best-human-friendly-identity entity) "]"))}]
-      (let [datomic-conn (e/server (ConnectDatomic datomic-uri))
-            db (e/server (e/Offload #(d/db datomic-conn)))
-            db-name (dx/datomic-uri-db-name datomic-uri)
-            db (e/server (vary-meta db assoc ::db-name db-name))
-            db-stats (e/server (e/Offload #(d/db-stats db)))]
+      (if (= "*" (dx/datomic-uri-db-name datomic-uri)) ; we don't know which db to connect to, but we can still list databases.
         (binding [*uri* datomic-uri
-                  *db-name* db-name
-                  *conn* datomic-conn
-                  *db* db
-                  *db-stats* db-stats
-                  e/*bindings* (e/server (merge e/*bindings* {#'*uri* datomic-uri #'*conn* datomic-conn, #'*db* db, #'*db-stats* db-stats #'*db-name* db-name}))]
-          (Navigate sitemap entrypoints))))))
+                  e/*bindings* (e/server (merge e/*bindings* {#'*uri* datomic-uri}))]
+          (Navigate sitemap entrypoints))
+        (let [datomic-conn (e/server (ConnectDatomic datomic-uri))
+              db (e/server (e/Offload #(d/db datomic-conn)))
+              db-name (dx/datomic-uri-db-name datomic-uri)
+              db (e/server (vary-meta db assoc ::db-name db-name))
+              db-stats (e/server (e/Offload #(d/db-stats db)))]
+          (binding [*allow-listing-and-browsing-all-dbs* allow-listing-and-browsing-all-dbs?
+                    *uri* datomic-uri
+                    *db-name* db-name
+                    *conn* datomic-conn
+                    *db* db
+                    *db-stats* db-stats
+                    e/*bindings* (e/server (merge e/*bindings* {#'*uri* datomic-uri #'*conn* datomic-conn, #'*db* db, #'*db-stats* db-stats #'*db-name* db-name}))]
+            (Navigate sitemap entrypoints)))))))
 
-(e/defn BrowseDatomicURIWithWildcardDb [sitemap entrypoints datomic-uri]
-  (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
-  (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
-  (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
-  (e/server
-    (binding [*uri* datomic-uri
-              e/*bindings* (e/server (merge e/*bindings* {#'*uri* datomic-uri}))
-              e/*exports* (e/exports)
-              hyperfiddle.navigator6.rendering/*server-pretty {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (best-human-friendly-identity entity) "]"))}]
-      (Navigate sitemap entrypoints))))
 
-(e/defn BrowseDatomicByURI [sitemap entrypoints datomic-uri]
-  (if (= "*" (dx/datomic-uri-db-name datomic-uri))
-    (BrowseDatomicURIWithWildcardDb sitemap entrypoints datomic-uri)
-    (BrowseDatomicURIWithPinnedDb sitemap entrypoints datomic-uri)))
 
 (comment
   (require '[dustingetz.mbrainz :refer [test-db lennon]])

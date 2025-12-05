@@ -28,8 +28,8 @@
                     (dissoc datomic-browser-sitemap 'attributes 'db) ; can't render 'db nor 'attributes page without a valid db name.
                     ['databases] ; default page will list available databases.
                     datomic-uri)
-                  (BrowseDatomicByURI ; database name is pinned in the uri
-                    datomic-browser-sitemap
+                  (BrowseDatomicByURI ; database name is pinned in the uri, can't list databases
+                    (dissoc datomic-browser-sitemap 'databases)
                     ['attributes 'db] ; default page will list attributes for the pinned db.
                     datomic-uri))))
              ([db-name] ; selected db-name from the URL – comes from a link click in 'databases page
@@ -38,8 +38,9 @@
                   (if (some? db-name) ; user selected a db-name – from the URL.
                     (BrowseDatomicByURI
                       datomic-browser-sitemap
-                      ['attributes 'db]
-                      (set-db-name-in-datomic-uri datomic-uri db-name))
+                      ['attributes 'db 'databases]
+                      (set-db-name-in-datomic-uri datomic-uri db-name) ; pin user-selected db
+                      :allow-listing-and-browsing-all-dbs? true) ; because we pinned the user-selected db but we still want to list and select other dbs.
                     (BrowseDatomicByURI ; no specific db-name selected
                       (dissoc datomic-browser-sitemap 'attributes 'db)
                       ['databases]  ; default page will list attributes for the pinned db.
