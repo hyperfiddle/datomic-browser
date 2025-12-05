@@ -1,6 +1,6 @@
 (ns dustingetz.hyperfiddle-datomic-browser-demo
   (:require
-   [dustingetz.datomic-browser2 :refer [BrowseDatomicConnection BrowseDatomicURI #?(:clj datomic-browser-sitemap)]]
+   [dustingetz.datomic-browser2 :refer [BrowseDatomicByConnection BrowseDatomicByURI #?(:clj datomic-browser-sitemap)]]
    #?(:clj [dustingetz.datomic-contrib2 :refer [datomic-uri-db-name set-db-name-in-datomic-uri]])
 
    [hyperfiddle.electric3 :as e]
@@ -18,25 +18,35 @@
              ([]
               (e/server
                 ;; Browse a given connection
-                #_(BrowseDatomicConnection
-                    (e/server datomic-browser-sitemap)
+                #_(BrowseDatomicByConnection
+                    (dissoc datomic-browser-sitemap 'databases) ; can't list databases from a connection
                     ['attributes] ; default
-                    (e/server datomic-conn))
-                ;; Browse by URI and eventually list databases if URI ends with `/*`
-                (BrowseDatomicURI
-                  (e/server datomic-browser-sitemap)
-                  ['databases 'db 'attributes]
-                  datomic-uri)))
-             ([db-name]
+                    datomic-conn)
+                ;; Browse by URI
+                (if (= "*" (datomic-uri-db-name datomic-uri)) ; uri allows connection to any database.
+                  (BrowseDatomicByURI
+                    (dissoc datomic-browser-sitemap 'attributes 'db) ; can't render 'db nor 'attributes page without a valid db name.
+                    ['databases] ; default page will list available databases.
+                    datomic-uri)
+                  (BrowseDatomicByURI ; database name is pinned in the uri
+                    datomic-browser-sitemap
+                    ['attributes 'db] ; default page will list attributes for the pinned db.
+                    datomic-uri))))
+             ([db-name] ; selected db-name from the URL – comes from a link click in 'databases page
               (e/server
-                (if (= "*" (datomic-uri-db-name datomic-uri)) ; uri allows connection to any database
-                  (BrowseDatomicURI
-                    (e/server datomic-browser-sitemap)
-                    ['databases]
-                    (set-db-name-in-datomic-uri datomic-uri db-name))
-                  (BrowseDatomicURI ; database name is pinned in the uri. Respect the provided uri and ignore the `db-name` argument.
-                    (e/server datomic-browser-sitemap)
-                    ['attributes]
+                (if (= "*" (datomic-uri-db-name datomic-uri)) ; uri allows connection to any database.
+                  (if (some? db-name) ; user selected a db-name – from the URL.
+                    (BrowseDatomicByURI
+                      datomic-browser-sitemap
+                      ['attributes 'db]
+                      (set-db-name-in-datomic-uri datomic-uri db-name))
+                    (BrowseDatomicByURI ; no specific db-name selected
+                      (dissoc datomic-browser-sitemap 'attributes 'db)
+                      ['databases]  ; default page will list attributes for the pinned db.
+                      datomic-uri))
+                  (BrowseDatomicByURI ; database name is pinned in the uri. Respect the provided uri and ignore the `db-name` argument.
+                    datomic-browser-sitemap
+                    ['attributes 'db]
                     datomic-uri)))))})))))
 
 (defn hyperfiddle-demo-boot [ring-request datomic-uri]

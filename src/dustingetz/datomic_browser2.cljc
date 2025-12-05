@@ -4,7 +4,7 @@
             ;; [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
             [hyperfiddle.hfql2 :as hfql :refer [hfql]]
             [hyperfiddle.hfql2.protocols :refer [Identifiable hfql-resolve Navigable Suggestable ComparableRepresentation]]
-            [hyperfiddle.navigator6 :as navigator :refer [HfqlRoot]]
+            [hyperfiddle.navigator6 :as navigator :refer [Navigate]]
             [hyperfiddle.navigator6.search :refer [*local-search]]
             [hyperfiddle.router5 :as r]
             [hyperfiddle.electric-dom3 :as dom]
@@ -270,7 +270,7 @@
                  meta
                  {ns-publics {vals {* [str meta]}}}]}})}))
 
-(e/defn BrowseDatomicConnection [sitemap entrypoints datomic-conn]
+(e/defn BrowseDatomicByConnection [sitemap entrypoints datomic-conn]
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
   (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
@@ -278,15 +278,14 @@
     (binding [e/*exports* (e/exports)
               hyperfiddle.navigator6.rendering/*server-pretty {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (best-human-friendly-identity entity) "]"))}]
       (let [db (e/server (e/Offload #(d/db datomic-conn)))
-            db (e/server (vary-meta db assoc ::db-name *db-name*))
             db-stats (e/server (e/Offload #(d/db-stats db)))]
         (binding [*conn* datomic-conn
                   *db* db
                   *db-stats* db-stats
                   e/*bindings* (e/server (merge e/*bindings* {#'*conn* datomic-conn, #'*db* db, #'*db-stats* db-stats}))]
-          (HfqlRoot sitemap entrypoints))))))
+          (Navigate sitemap entrypoints))))))
 
-(e/defn BrowsePinnedDatomicURI [sitemap entrypoints datomic-uri]
+(e/defn BrowseDatomicURIWithPinnedDb [sitemap entrypoints datomic-uri]
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
   (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
@@ -299,13 +298,14 @@
             db (e/server (vary-meta db assoc ::db-name db-name))
             db-stats (e/server (e/Offload #(d/db-stats db)))]
         (binding [*uri* datomic-uri
+                  *db-name* db-name
                   *conn* datomic-conn
                   *db* db
                   *db-stats* db-stats
                   e/*bindings* (e/server (merge e/*bindings* {#'*uri* datomic-uri #'*conn* datomic-conn, #'*db* db, #'*db-stats* db-stats #'*db-name* db-name}))]
-          (HfqlRoot sitemap entrypoints))))))
+          (Navigate sitemap entrypoints))))))
 
-(e/defn BrowseWildcardDatomicURI [sitemap entrypoints datomic-uri]
+(e/defn BrowseDatomicURIWithWildcardDb [sitemap entrypoints datomic-uri]
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
   (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
   (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})
@@ -314,12 +314,12 @@
               e/*bindings* (e/server (merge e/*bindings* {#'*uri* datomic-uri}))
               e/*exports* (e/exports)
               hyperfiddle.navigator6.rendering/*server-pretty {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (best-human-friendly-identity entity) "]"))}]
-      (HfqlRoot sitemap entrypoints))))
+      (Navigate sitemap entrypoints))))
 
-(e/defn BrowseDatomicURI [sitemap entrypoints datomic-uri]
+(e/defn BrowseDatomicByURI [sitemap entrypoints datomic-uri]
   (if (= "*" (dx/datomic-uri-db-name datomic-uri))
-    (BrowseWildcardDatomicURI sitemap entrypoints datomic-uri)
-    (BrowsePinnedDatomicURI sitemap entrypoints datomic-uri)))
+    (BrowseDatomicURIWithWildcardDb sitemap entrypoints datomic-uri)
+    (BrowseDatomicURIWithPinnedDb sitemap entrypoints datomic-uri)))
 
 (comment
   (require '[dustingetz.mbrainz :refer [test-db lennon]])
