@@ -16,21 +16,26 @@
             #?(:clj [datomic.lucene])
             #?(:clj [dustingetz.datomic-contrib2 :as dx])))
 
-(e/declare ^:dynamic *uri*)
-(e/declare ^:dynamic *db-name*)
-(e/declare ^:dynamic *conn*)
-(e/declare ^:dynamic *db*)
-(e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once
-(e/declare ^:dynamic *filter-predicate*) ; for d/filter
-(e/declare ^:dynamic *allow-listing-and-browsing-all-dbs*)
+(e/declare ^:dynamic *uri*) ; current Datomic URI. Available when injected. Not available when browsing a Datomic connection.
+(e/declare ^:dynamic *db-name*) ; current Datomic database name. Available when *uri* is available.
+(e/declare ^:dynamic *conn*) ; current Datomic connection. Always available. Either injected by browsing a connection object or derived from *uri* when browsing by URI.
+(e/declare ^:dynamic *db*) ; current Datomic database reference. Always available.
+(e/declare ^:dynamic *db-stats*) ; shared for perfs – safe to compute only once per *db* value.
+(e/declare ^:dynamic *filter-predicate*) ; for injecting predicates for d/filter
+(e/declare ^:dynamic *allow-listing-and-browsing-all-dbs*) ; when browsing by Datomic URI, allow listing and browsing other databases than the currently selected one. Default to false (disallowed).
 
-#?(:clj (defn databases []
-          (let [database-names-list (cond
-                                      (= "*" (dx/datomic-uri-db-name *uri*)) (d/get-database-names *uri*) ; Throws if datomic uri doesn't end with `*`.
-                                      *allow-listing-and-browsing-all-dbs* (d/get-database-names (dx/set-db-name-in-datomic-uri *uri* "*"))
-                                      :else (list *db-name*))] ; only list current db
-            (->> database-names-list
-              (hfql/navigable (fn [_index db-name] (hfql-resolve `(d/db ~db-name))))))))
+#?(:clj (defn databases [] ; only meaningful when browsing by Datomic URI. Browsing a Datomic connection object doesn't allow listing databases.
+          (when (some? *uri*)
+            (let [database-names-list (cond
+                                        (= "*" (dx/datomic-uri-db-name *uri*)) ; Injected *uri* is a wildcard Datomic URI, allowing database listing.
+                                        (d/get-database-names *uri*)
+
+                                        *allow-listing-and-browsing-all-dbs* ; defaults to false – must be explicitly allowed at the entrypoint.
+                                        (d/get-database-names (dx/set-db-name-in-datomic-uri *uri* "*"))
+
+                                        :else (list *db-name*))] ; only list current db.
+              (->> database-names-list
+                (hfql/navigable (fn [_index db-name] (hfql-resolve `(d/db ~db-name)))))))))
 
 #?(:clj (defn attributes "Datomic schema, with Datomic query diagnostics"
           []
@@ -169,12 +174,14 @@
      ComparableRepresentation
      (comparable [db] (db-name db))))
 
-#?(:clj (defmethod hfql-resolve `d/db [[_ db-name]]
-          ;; Resolve db by name if it matches the injected datomic uri or if injected datomic uri allows all dbs to be listed (ends with `*`).
-          (let [datomic-uri-db-name (dx/datomic-uri-db-name *uri*)]
-            (when (or (= "*" datomic-uri-db-name) (= db-name datomic-uri-db-name) *allow-listing-and-browsing-all-dbs*)
-              (with-meta (d/db (d/connect (dx/set-db-name-in-datomic-uri *uri* db-name)))
-                {::db-name db-name})))))
+#?(:clj (defmethod hfql-resolve `d/db [[_ db-name]] ; resolve a Datomic database by name.
+          (when *uri* ; Resolving a Datomic database by name is only possible when browsing by Datomic URI. But it isn't always allowed.
+            (let [datomic-uri-db-name (dx/datomic-uri-db-name *uri*)]
+              (when (or (= "*" datomic-uri-db-name) ; Injected Datomic URI allows listing databases and connecting to other databases.
+                      (= db-name datomic-uri-db-name) ; Injected Datomic URI has a pinned database name, and doesn't allow connecting to other databases, but we are trying to resolve the current pinned one, which is always allowed.
+                      *allow-listing-and-browsing-all-dbs*) ; defaults to false – must be explicitly allowed at the entrypoint.
+                (with-meta (d/db (d/connect (dx/set-db-name-in-datomic-uri *uri* db-name)))
+                  {::db-name db-name}))))))
 
 #?(:clj (defmethod hfql-resolve `d/history [[_ db]] (d/history (hfql-resolve db))))
 #?(:clj (defmethod hfql-resolve `d/filter  [[_ db]] (d/filter (hfql-resolve db) *filter-predicate*)))
