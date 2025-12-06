@@ -4,7 +4,7 @@
             ;; [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
             [hyperfiddle.hfql2 :as hfql :refer [hfql]]
             [hyperfiddle.hfql2.protocols :refer [Identifiable hfql-resolve Navigable Suggestable ComparableRepresentation]]
-            [hyperfiddle.navigator6 :as navigator :refer [Navigate]]
+            [hyperfiddle.navigator6 :as navigator :refer [HfqlRoot]]
             [hyperfiddle.navigator6.search :refer [*local-search]]
             [hyperfiddle.router5 :as r]
             [hyperfiddle.electric-dom3 :as dom]
@@ -276,7 +276,7 @@
         (binding [*db* db
                   *db-stats* db-stats
                   e/*bindings* (e/server (merge e/*bindings* {#'*db* db, #'*db-stats* db-stats}))]
-          (Navigate sitemap entrypoints))))))
+          (HfqlRoot sitemap entrypoints))))))
 
 (e/defn BrowseDatomicByConnection [sitemap entrypoints datomic-conn]
   (e/server
@@ -292,7 +292,7 @@
                 e/*bindings* (e/server (merge e/*bindings* {#'*uri* datomic-uri, #'*db-name* db-name}))]
         (if (= "*" db-name)
           (do (InjectStyles)
-            (Navigate sitemap [^{::r/link ['..]} 'databases]))
+            (HfqlRoot sitemap [^{::r/link ['..]} 'databases]))
           (BrowseDatomicByConnection sitemap entrypoints (e/server (ConnectDatomic datomic-uri))))))))
 
 (comment
