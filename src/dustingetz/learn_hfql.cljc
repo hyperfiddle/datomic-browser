@@ -2,6 +2,7 @@
   (:require [hyperfiddle.hfql2 :as hfql :refer [hfql]]
             [hyperfiddle.hfql2.protocols :refer [Identifiable hfql-resolve Navigable Suggestable ComparableRepresentation]]))
 
+(set! clojure.core/*print-namespace-maps* false) ; better REPL print indentation
 
 #?(:clj (extend-type java.io.File
           Identifiable (identify [^java.io.File o] `(clojure.java.io/file ~(.getPath o)))
@@ -25,8 +26,6 @@
 #?(:clj (defmethod hfql-resolve `find-var [[_ var-sym]] (find-var var-sym)))
 
 (comment
-  (set! *print-namespace-maps* false)
-
   (def !x (clojure.java.io/file "../hyperfiddle/src"))
   (time (hfql/pull (hfql {!x [java.io.File/.getName
                               java.io.File/.getAbsolutePath
