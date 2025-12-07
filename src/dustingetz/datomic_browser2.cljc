@@ -294,20 +294,3 @@
           (do (InjectStyles)
             (HfqlRoot sitemap [^{::r/link ['..]} 'databases]))
           (BrowseDatomicByConnection sitemap entrypoints (e/server (ConnectDatomic datomic-uri))))))))
-
-(comment
-  (require '[dustingetz.mbrainz :refer [test-db lennon]])
-  (set! *print-namespace-maps* false)
-
-  (def !lennon (d/entity @test-db lennon))
-  (def q (hfql {!lennon [:db/id ; careful of ref lifting, it lifts to EntityMap and REPL prints the map
-                         :artist/name
-                         :artist/type]}))
-  (hfql/pull q)
-
-  (def q (hfql {!lennon
-                [:artist/name
-                 {:track/_artists count}
-                 type]}))
-  (time (hfql/pull q)) ; "Elapsed time: 1.173292 msecs"
-  := {'!lennon {:artist/name "Lennon", :track/_artists 30, 'type 'datomic.query.EntityMap}})
