@@ -199,7 +199,7 @@
 ;; #?(:clj (defn slow-query [] (Thread/sleep 5000) (d/entity *db* @(requiring-resolve 'dustingetz.mbrainz/lennon))))
 
 #?(:clj
-   (def datomic-browser-sitemap
+   (def sitemap
      {
       'databases (hfql {(databases) {* [^{::hfql/link ['.. [`(DatomicBrowser ~'%v) 'attributes]]} db-name d/db-stats]}}) ; TODO use '% instead of '%v and wire hf/resolve
       'attributes
