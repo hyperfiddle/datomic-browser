@@ -120,22 +120,9 @@
   (e/client (dom/span (dom/props {:title (format-number-human-friendly value)})
               (dom/text (format-number-human-friendly value :notation :compact :maximumFractionDigits 1)))))
 
+; these depend on *app-db*
 #?(:clj (defn- entity-exists? [db eid] (and (some? eid) (seq (d/datoms db :eavt eid))))) ; d/entity always return an EntityMap, even for a non-existing :db/id
 #?(:clj (defmethod hfql-resolve `d/entity [[_ eid]] (when (entity-exists? *db* eid) (d/entity *db* eid))))
-
-#?(:clj (defn- best-human-friendly-identity [entity] (or #_(best-domain-level-human-friendly-identity entity) (:db/ident entity) (:db/id entity))))
-
-#?(:clj ; list all attributes of an entity – including reverse refs.
-   (extend-type datomic.query.EntityMap
-     Identifiable
-     (identify [entity] (list `d/entity (best-human-friendly-identity entity)))
-     Suggestable
-     (suggest [entity]
-       (let [attributes (cons :db/id (dx/entity-attrs entity))
-             reverse-attributes (->> (dx/reverse-refs (d/entity-db entity) (:db/id entity)) (map first) (distinct) (map dx/invert-attribute))]
-         (hfql/build-hfql (vec (concat attributes reverse-attributes)))))
-     ComparableRepresentation
-     (comparable [entity] (str (best-human-friendly-identity entity))))) ; Entities are not comparable, but their printable representation (e.g. :db/ident) is.
 
 #?(:clj ; list all attributes of an entity – including reverse refs.
    (extend-type datomic.db.Datum
@@ -271,7 +258,7 @@
   (InjectStyles)
   (e/server
     (binding [e/*exports* (e/exports)
-              hyperfiddle.navigator6.rendering/*server-pretty {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (best-human-friendly-identity entity) "]"))}]
+              hyperfiddle.navigator6.rendering/*server-pretty {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (dx/best-human-friendly-identity entity) "]"))}]
       (let [db-stats (e/server (e/Offload #(d/db-stats db)))]
         (binding [*db* db
                   *db-stats* db-stats

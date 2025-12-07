@@ -2,9 +2,9 @@
   "teaching namespace, unused by datomic-browser app"
   (:require
    [datomic.api :as d]
-   [dustingetz.datomic-contrib2 :as dx] ; reverse ref helpers, etc
+   dustingetz.datomic-contrib2  ; install HFQL protocols on EntityMap
    [hyperfiddle.hfql2 :as hfql :refer [hfql]]
-   [hyperfiddle.hfql2.protocols :refer [Identifiable hfql-resolve Navigable Suggestable ComparableRepresentation]]))
+   [hyperfiddle.hfql2.protocols :refer [Identifiable hfql-resolve Suggestable]]))
 
 (comment
   "datomic entity"
@@ -42,26 +42,18 @@
   (hfql/pull (hfql {(d/entity @test-db :db/doc)
                     []})))
 
-(extend-type datomic.query.EntityMap
-  Identifiable
-  (identify [entity] (list `d/entity (or (:db/ident entity) (:db/id entity))))
-  Suggestable
-  (suggest [entity] ; list all attributes of an entity – including reverse refs.
-    (let [attributes (cons :db/id (dx/entity-attrs entity))
-          reverse-attributes (->> (dx/reverse-refs (d/entity-db entity) (:db/id entity))
-                               (map first) (distinct) (map dx/invert-attribute))]
-      (hfql/build-hfql (vec (concat attributes reverse-attributes))))))
-
 (def ^:dynamic *app-db*)
 (defn entity-exists? [db eid] (and (some? eid) (seq (d/datoms db :eavt eid))))
 (defmethod hfql-resolve `d/entity [[_ eid]] (when (entity-exists? *app-db* eid) (d/entity *app-db* eid)))
 
 (comment
   "the HFQL protocols"
-  ; We use these for dependency injection, it's WIP
-  ; Goal is to be able to route to ANY object that you can name,
-  ; while respecting that certain dependencies, like the application database,
-  ; must be securely injected (as implied by the application) and not part of thier public name
+  ; C.f. the extend-type on datomic.query.EntityMap in dustingetz.datomic-contrib2
+  ; We use a few protocols and/or multimethods for dependency injection.
+  ; First is `identify` and `resolve`, their goal is to be able to route to
+  ; ANY object that you can name, while respecting that certain dependencies,
+  ; like the application database, must be securely injected (as implied by the
+  ; application entrypoint) and not part of thier public name.
 
   ; Identifiable - used to serialize the constructor to put in a URL
   (hfql/identify !lennon) := `(datomic.api/entity ~lennon) ; note no db, this is symbolic
