@@ -3,8 +3,8 @@
   (:require
    [datomic.api :as d]
    dustingetz.datomic-contrib2  ; install HFQL protocols on EntityMap
-   [hyperfiddle.hfql2 :as hfql :refer [hfql]]
-   [hyperfiddle.hfql2.protocols :refer [Identifiable hfql-resolve Suggestable]]))
+   [hyperfiddle.hfql2 :as hfql :refer [hfql hfql-resolve]]
+   [hyperfiddle.hfql2.protocols :refer [Identifiable -hfql-resolve Suggestable]]))
 
 (comment
   "datomic entity"
@@ -44,7 +44,7 @@
 
 (def ^:dynamic *app-db*)
 (defn entity-exists? [db eid] (and (some? eid) (seq (d/datoms db :eavt eid))))
-(defmethod hfql-resolve `d/entity [[_ eid]] (when (entity-exists? *app-db* eid) (d/entity *app-db* eid)))
+(defmethod -hfql-resolve `d/entity [[_ eid]] (when (entity-exists? *app-db* eid) (d/entity *app-db* eid)))
 
 (comment
   "the HFQL protocols"

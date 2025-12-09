@@ -2,8 +2,8 @@
   (:require [contrib.data :refer [get-with-residual-meta]]
             [hyperfiddle.electric3 :as e]
             ;; [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
-            [hyperfiddle.hfql2 :as hfql :refer [hfql]]
-            [hyperfiddle.hfql2.protocols :refer [Identifiable hfql-resolve Navigable Suggestable ComparableRepresentation]]
+            [hyperfiddle.hfql2 :as hfql :refer [hfql hfql-resolve]]
+            [hyperfiddle.hfql2.protocols :refer [Identifiable -hfql-resolve Navigable Suggestable ComparableRepresentation]]
             [hyperfiddle.navigator6 :as navigator :refer [HfqlRoot]]
             [hyperfiddle.navigator6.search :refer [*local-search]]
             [hyperfiddle.router5 :as r]
@@ -122,14 +122,14 @@
 
 ; these depend on *app-db*
 #?(:clj (defn- entity-exists? [db eid] (and (some? eid) (seq (d/datoms db :eavt eid))))) ; d/entity always return an EntityMap, even for a non-existing :db/id
-#?(:clj (defmethod hfql-resolve `d/entity [[_ eid]] (when (entity-exists? *db* eid) (d/entity *db* eid))))
+#?(:clj (defmethod -hfql-resolve `d/entity [[_ eid]] (when (entity-exists? *db* eid) (d/entity *db* eid))))
 
 #?(:clj ; list all attributes of an entity – including reverse refs.
    (extend-type datomic.db.Datum
      Identifiable
-     (identify [datum] `(datomic.db/datum ~@(dx/datom-identity datum)))
+     (-identify [datum] `(datomic.db/datum ~@(dx/datom-identity datum)))
      Navigable
-     (nav [[e a v tx added] k _]
+     (-nav [[e a v tx added] k _]
        (case k
          :e (d/entity *db* e)
          :a (d/entity *db* a)
@@ -137,31 +137,31 @@
          :tx (d/entity *db* tx)
          :added added))
      Suggestable
-     (suggest [_] (hfql [:e :a :v :tx :added]))
+     (-suggest [_] (hfql [:e :a :v :tx :added]))
      ComparableRepresentation
-     (comparable [datum] (into [] datum))))
+     (-comparable [datum] (into [] datum))))
 
-#?(:clj (defmethod hfql-resolve `datomic.db/datum [[_ e a serialized-v tx added]] (dx/resolve-datom *db* e a serialized-v tx added)))
+#?(:clj (defmethod -hfql-resolve `datomic.db/datum [[_ e a serialized-v tx added]] (dx/resolve-datom *db* e a serialized-v tx added)))
 
 (defn db-name [db] (::db-name (meta db)))
 
 #?(:clj
    (extend-type datomic.db.Db
      Identifiable
-     (identify [db] (when-let [nm (db-name db)]
-                      (let [id `(d/db ~nm)
-                            ;; following db transformations are commutative, they can be applied in any order.
-                            id (if (d/is-history db) `(d/history ~id) id)
-                            id (if (d/is-filtered db) `(d/filter ~id) id) ; resolving will require DI to reconstruct the predicate
-                            id (if (d/since-t db) `(d/since ~id ~(d/since-t db)) id)
-                            id (if (d/as-of-t db) `(d/as-of ~id ~(d/as-of-t db)) id)
-                            ;; datomic-uri is security-sensitive and is not part of db's identity. Resolving will required DI.
-                            ]
-                        id)))
+     (-identify [db] (when-let [nm (db-name db)]
+                       (let [id `(d/db ~nm)
+                             ;; following db transformations are commutative, they can be applied in any order.
+                             id (if (d/is-history db) `(d/history ~id) id)
+                             id (if (d/is-filtered db) `(d/filter ~id) id) ; resolving will require DI to reconstruct the predicate
+                             id (if (d/since-t db) `(d/since ~id ~(d/since-t db)) id)
+                             id (if (d/as-of-t db) `(d/as-of ~id ~(d/as-of-t db)) id)
+                             ;; datomic-uri is security-sensitive and is not part of db's identity. Resolving will required DI.
+                             ]
+                         id)))
      ComparableRepresentation
-     (comparable [db] (db-name db))))
+     (-comparable [db] (db-name db))))
 
-#?(:clj (defmethod hfql-resolve `d/db [[_ db-name]] ; resolve a Datomic database by name.
+#?(:clj (defmethod -hfql-resolve `d/db [[_ db-name]] ; resolve a Datomic database by name.
           (when *uri* ; Resolving a Datomic database by name is only possible when browsing by Datomic URI. But it isn't always allowed.
             (let [datomic-uri-db-name (dx/datomic-uri-db-name *uri*)]
               (when (or (= "*" datomic-uri-db-name) ; Injected Datomic URI allows listing databases and connecting to other databases.
@@ -170,10 +170,10 @@
                 (with-meta (d/db (d/connect (dx/set-db-name-in-datomic-uri *uri* db-name)))
                   {::db-name db-name}))))))
 
-#?(:clj (defmethod hfql-resolve `d/history [[_ db]] (d/history (hfql-resolve db))))
-#?(:clj (defmethod hfql-resolve `d/filter  [[_ db]] (d/filter (hfql-resolve db) *filter-predicate*)))
-#?(:clj (defmethod hfql-resolve `d/since [[_ db t]] (d/since (hfql-resolve db) t)))
-#?(:clj (defmethod hfql-resolve `d/as-of [[_ db t]] (d/as-of (hfql-resolve db) t)))
+#?(:clj (defmethod -hfql-resolve `d/history [[_ db]] (d/history (hfql-resolve db))))
+#?(:clj (defmethod -hfql-resolve `d/filter  [[_ db]] (d/filter (hfql-resolve db) *filter-predicate*)))
+#?(:clj (defmethod -hfql-resolve `d/since [[_ db t]] (d/since (hfql-resolve db) t)))
+#?(:clj (defmethod -hfql-resolve `d/as-of [[_ db t]] (d/as-of (hfql-resolve db) t)))
 
 (e/defn ConnectDatomic [datomic-uri]
   (e/server
