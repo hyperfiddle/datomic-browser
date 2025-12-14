@@ -1,5 +1,6 @@
 (ns dustingetz.datomic-browser2
   (:require [contrib.data :refer [get-with-residual-meta]]
+            [hyperfiddle.api :as hf]
             [hyperfiddle.electric3 :as e]
             ;; [hyperfiddle.hfql0 #?(:clj :as :cljs :as-alias) hfql]
             [hyperfiddle.hfql2 :as hfql :refer [hfql hfql-resolve]]
@@ -97,21 +98,21 @@
     (let [attribute (hfql/symbolic-edge edge)]
       (e/Reconcile
         (cond (= :db/id attribute) (EntityTooltip entity edge value)
-              (qualified-keyword? value)
-              (let [[typ _ unique?] (dx/easy-attr *db* attribute)]
-                (e/Reconcile
-                  (cond
-                    (= :db/id attribute) (EntityTooltip entity edge value)
-                    (= :ref typ) (pprint-str (d/pull *db* ['*] value) :print-length 10 :print-level 2)
-                    (= :identity unique?) (pprint-str (d/pull *db* ['*] [attribute #_(:db/ident (d/entity db a)) value]) ; resolve lookup ref
-                                            :print-length 10 :print-level 2)
-                    () nil))))))))
+          (qualified-keyword? value)
+          (let [[typ _ unique?] (dx/easy-attr *db* attribute)]
+            (e/Reconcile
+              (cond
+                (= :db/id attribute) (EntityTooltip entity edge value)
+                (= :ref typ) (pprint-str (d/pull *db* ['*] value) :print-length 10 :print-level 2)
+                (= :identity unique?) (pprint-str (d/pull *db* ['*] [attribute #_(:db/ident (d/entity db a)) value]) ; resolve lookup ref
+                                        :print-length 10 :print-level 2)
+                () nil))))))))
 
 (e/defn ^::e/export SummarizeDatomicAttribute [_entity edge _value] ; FIXME props is a custom hyperfiddle type
   (e/server
     ((fn [] ; IIFE for try/catch support – Electric 3 doesn't have try/catch yet.
        (try (str/trim (str (hfql/describe-formatted edge) " " (summarize-attr *db* (hfql/symbolic-edge edge))))
-            (catch Throwable _))))))
+         (catch Throwable _))))))
 
 (e/defn ^::e/export EntityDbidCell [entity edge value] ; FIXME edge is a custom hyperfiddle type
   (dom/span (dom/text (e/server (hfql/identify value)) " ") (r/link ['. [`(~'entity-history ~(hfql/identify entity))]] (dom/text "entity history"))))
@@ -250,8 +251,8 @@
 
 (e/defn InjectStyles []
   (e/client
-    (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/electric-forms.css"}))
-    (dom/link (dom/props {:rel :stylesheet :href "/hyperfiddle/datomic-browser2.css"}))
+    (dom/link (dom/props {:rel :stylesheet :href (e/server (str hf/*base-static-resource-path* "electric-forms.css"))}))
+    (dom/link (dom/props {:rel :stylesheet :href (e/server (str hf/*base-static-resource-path* "datomic-browser2.css"))}))
     (Checkbox* false {:class "data-loader__enabled" :style {:position :absolute, :inset-block-start "1dvw", :inset-inline-end "1dvw"}})))
 
 (e/defn BrowseDatomicDatabase [sitemap entrypoints db]
