@@ -20,11 +20,11 @@ mkdir -p state
 pushd state
 
 info "Downloading datomic-pro"
-downloadAsNeeded https://datomic-pro-downloads.s3.amazonaws.com/1.0.6735/datomic-pro-1.0.6735.zip
+downloadAsNeeded https://datomic-pro-downloads.s3.amazonaws.com/1.0.7469/datomic-pro-1.0.7469.zip
 info "Extracting datomic-pro"
 if [ ! -d "datomic-pro" ]; then
-    unzip -q datomic-pro-1.0.6735.zip || fail "Failed to unzip datomic-pro"
-    mv datomic-pro-1.0.6735 datomic-pro
+    unzip -q datomic-pro-1.0.7469.zip || fail "Failed to unzip datomic-pro"
+    mv datomic-pro-1.0.7469 datomic-pro
 fi
 
 info "Downloading mbrainz dataset"
