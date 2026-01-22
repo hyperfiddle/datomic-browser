@@ -225,7 +225,7 @@
              {* [^{::hfql/link '(entity-detail :e)
                    ::hfql/Tooltip `EntityTooltip}
                  #(:e %)
-                 ^{::hfql/link '(attribute-detail %)
+                 ^{::hfql/link '(attribute-detail :a)
                    ::hfql/Tooltip `EntityTooltip}
                  ^{::hfql/label :db/ident}
                  {:a :db/ident} ; FIXME
