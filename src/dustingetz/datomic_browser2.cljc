@@ -186,12 +186,10 @@
 
 ;; #?(:clj (defn slow-query [] (Thread/sleep 5000) (d/entity *db* @(requiring-resolve 'dustingetz.mbrainz/lennon))))
 
-(defn crash! [_] (/ 1 0))
-
 #?(:clj
    (def sitemap
      {
-      'databases (hfql {(databases) {* [^{::hfql/link ['.. [`(DatomicBrowser ~'%v) 'attributes]]} db-name d/db-stats crash!]}}) ; TODO use '% instead of '%v and wire hf/resolve
+      'databases (hfql {(databases) {* [^{::hfql/link ['.. [`(DatomicBrowser ~'%v) 'attributes]]} db-name d/db-stats]}}) ; TODO use '% instead of '%v and wire hf/resolve
       'attributes
       (hfql {(attributes)
              {* ^{::hfql/ColumnHeaderTooltip `SummarizeDatomicAttribute
