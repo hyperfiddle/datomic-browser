@@ -14,7 +14,7 @@ application classpath to be available"
     :or {optimize true, debug false, verbose false, version electric-user-version}
     :as config}]
   (log/info 'build-client (pr-str config #_argmap))
-  (b/delete {:path "resources/public/electric_starter_app/js"})
+  (b/delete {:path "resources/public/hyperfiddle-starter-app/js"})
   (b/delete {:path "resources/electric-manifest.edn"})
 
   ; bake electric-user-version into artifact, cljs and clj
@@ -30,7 +30,7 @@ application classpath to be available"
          :verbose verbose,
          :config-merge
          [{:compiler-options {:optimizations (if optimize :advanced :simple)}
-             :closure-defines  {'hyperfiddle.electric-client3/ELECTRIC_USER_VERSION version}}]})
+           :closure-defines  {'hyperfiddle.electric-client3/ELECTRIC_USER_VERSION version}}]})
       shadow-status (assert (= shadow-status :done) "shadow-api/release error")) ; fail build on error
   (shadow-server/stop!)
   (log/info "client built"))
@@ -38,8 +38,8 @@ application classpath to be available"
 (def class-dir "target/classes")
 
 (defn uberjar
-  [{:keys [optimize debug verbose ::jar-name, ::skip-client, version]
-    :or {optimize true, debug false, verbose false, skip-client false, version electric-user-version}
+  [{:keys [optimize debug verbose ::jar-name, ::skip-client, version, aliases]
+    :or {optimize true, debug false, verbose false, skip-client false, version electric-user-version, aliases [:prod]}
     :as args}]
   ; careful, shell quote escaping combines poorly with clj -X arg parsing, strings read as symbols
   (log/info 'uberjar (pr-str args))
@@ -50,8 +50,7 @@ application classpath to be available"
 
   (b/copy-dir {:target-dir class-dir :src-dirs ["src" "src-prod" "resources"]})
   (let [jar-name (or (some-> jar-name str) ; override for Dockerfile builds to avoid needing to reconstruct the name
-                   (format "electricfiddle-%s.jar" version))
-        aliases [:prod]]
+                   (format "hyperfiddle-starter-app-%s.jar" version))]
     (b/uber {:class-dir class-dir
              :uber-file (str "target/" jar-name)
              :basis     (b/create-basis {:project "deps.edn" :aliases aliases})})
