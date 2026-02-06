@@ -1,7 +1,7 @@
-FROM clojure:temurin-11-tools-deps-1.12.0.1501 AS datomic-fixtures
+FROM clojure:temurin-17-tools-deps-1.12.0.1501 AS datomic-fixtures
 WORKDIR /app
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends unzip curl wget
-COPY datomic_fixtures.sh datomic_fixtures.sh
+COPY datomic_fixtures_mbrainz_small.sh datomic_fixtures_mbrainz_small.sh
 COPY datomic_fixtures_mbrainz_full.sh datomic_fixtures_mbrainz_full.sh
 RUN ./datomic_fixtures_mbrainz_small.sh
 # RUN ./datomic_fixtures_mbrainz_full.sh
@@ -9,7 +9,7 @@ RUN ./datomic_fixtures_mbrainz_small.sh
 RUN rm state/*.tar
 RUN rm state/*.zip
 
-FROM clojure:temurin-11-tools-deps-1.12.0.1501 AS build
+FROM clojure:temurin-17-tools-deps-1.12.0.1501 AS build
 WORKDIR /app
 COPY deps.edn deps.edn
 ARG VERSION
@@ -25,8 +25,8 @@ COPY resources resources
 
 RUN clojure -X:prod:build uberjar :version "\"$VERSION\"" :build/jar-name "app.jar"
 
-FROM amazoncorretto:11 AS app
-# FROM clojure:temurin-11-tools-deps-1.12.0.1501 AS app
+FROM amazoncorretto:17 AS app
+# FROM clojure:temurin-17-tools-deps-1.12.0.1501 AS app
 WORKDIR /app
 COPY run_datomic.sh run_datomic.sh
 COPY --from=datomic-fixtures /app/state state
