@@ -34,5 +34,5 @@ COPY --from=build /app/target/app.jar app.jar
 RUN echo -e "/state/\n/vendor/" > .gitignore
 
 EXPOSE 8080
-# CMD ./run_datomic.sh && java -cp app.jar clojure.main -m prod datomic-uri datomic:dev://localhost:4334/mbrainz-1968-1973
-CMD ./run_datomic.sh && java -cp app.jar clojure.main -m prod datomic-uri datomic:dev://localhost:4334/mbrainz-full
+CMD ./run_datomic.sh && java -cp app.jar clojure.main -m prod datomic-uri datomic:dev://localhost:4334/mbrainz-1968-1973
+# CMD ./run_datomic.sh && java -cp app.jar clojure.main -m prod datomic-uri datomic:dev://localhost:4334/mbrainz-full
