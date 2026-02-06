@@ -14,14 +14,6 @@ clojure -X:jetty9:prod:build uberjar :version '"'$(git rev-parse HEAD)'"' :shado
 java -cp target/datomic-browser.jar clojure.main -m prod-jetty9 datomic-uri 'datomic:dev://localhost:4334/*'
 ```
 
-## Uberjar with jetty9
-
-You must have edited `src-prod/prod.cljc` to use jetty9. See comments in code.
-
-clojure -X:jetty9:prod:build uberjar :aliases '[:jetty9 :prod]' :build/jar-name "datomic-browser.jar"
-java -cp target/datomic-browser.jar clojure.main -m prod datomic-uri 'datomic:dev://localhost:4334/*'
-
-
 ## Docker
 
 ```shell
