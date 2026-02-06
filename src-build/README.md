@@ -1,22 +1,23 @@
 # How to build for prod
 
-## Uberjar
+## Uberjar (Jetty 10+)
 
-clojure -X:prod:build uberjar :build/jar-name "datomic-browser.jar"
+clojure -X:prod:build uberjar :version '"'$(git rev-parse HEAD)'"' :build/jar-name '"datomic-browser.jar"'
 java -cp target/datomic-browser.jar clojure.main -m prod datomic-uri 'datomic:dev://localhost:4334/*'
 
-## Uberjar with jetty9
+## Uberjar (Jetty 9)
 
-You must have edited `src-prod/prod.cljc` to use jetty9. See comments in code.
-
-clojure -X:jetty9:prod:build uberjar :aliases '[:jetty9 :prod]' :build/jar-name "datomic-browser.jar"
-java -cp target/datomic-browser.jar clojure.main -m prod datomic-uri 'datomic:dev://localhost:4334/*'
-
+clojure -X:jetty9:prod:build uberjar :version '"'$(git rev-parse HEAD)'"' :shadow-build :prod-jetty9 :aliases '[:jetty9 :prod]' :build/jar-name '"datomic-browser.jar"'
+java -cp target/datomic-browser.jar clojure.main -m prod-jetty9 datomic-uri 'datomic:dev://localhost:4334/*'
 
 ## Docker
 
-docker build --build-arg VERSION=$(git rev-parse HEAD) -t hyperfiddle-starter-app:latest .
-docker run --rm -it -p 8080:8080 hyperfiddle-starter-app:latest
+docker build --build-arg VERSION=$(git rev-parse HEAD) -t datomic-browser:latest .
+docker run --rm -it -p 8080:8080 datomic-browser:latest
+
+## Fly
+
+fly deploy --remote-only --build-arg VERSION=$(git rev-parse HEAD)
 
 ## Classpath integration
 
@@ -26,4 +27,4 @@ docker run --rm -it -p 8080:8080 hyperfiddle-starter-app:latest
    - electric server and client running in your application
    - hot code reload with shadow-cljs working.
 3. Copy `src/dustingetz/datomic_browser2.cljc` and `src/dustingetz/hyperfiddle_datomic_browser_demo` into your source path.
-4. Adapt the client and server entrypoints you've got from the starter app so they match `src-dev/dev.cljc` from this repo. They only differs slightly.
+4. Adapt the client and server entrypoints you've got from the starter app so they match `src-dev/dev.cljc` from this repo. They only differ slightly.
