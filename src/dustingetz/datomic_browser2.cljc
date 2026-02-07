@@ -39,11 +39,12 @@
                 (hfql/navigable (fn [_index db-name] (hfql-resolve `(d/db ~db-name)))))))))
 
 #?(:clj (defn attributes "Datomic schema, with Datomic query diagnostics"
-          []
-          (let [x (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [*db*]
-                            :io-context ::attributes, :query-stats ::attributes})
-                x (get-with-residual-meta x :ret)]
-            (hfql/navigable (fn [_index ?e] (d/entity *db* ?e)) x))))
+          ([] (attributes *db*))
+          ([db] ; can be called as an edge on dbval targets
+           (let [x (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [db]
+                             :io-context ::attributes, :query-stats ::attributes})
+                 x (get-with-residual-meta x :ret)]
+             (hfql/navigable (fn [_index ?e] (d/entity db ?e)) x)))))
 
 #?(:clj (defn attribute-count "hello"
           [!e] (-> *db-stats* :attrs (get (:db/ident !e)) :count)))
