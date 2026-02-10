@@ -36,3 +36,11 @@ fly deploy --remote-only --build-arg VERSION=$(git rev-parse HEAD)
    - hot code reload with shadow-cljs working.
 3. Copy `src/dustingetz/datomic_browser2.cljc` and `src/dustingetz/hyperfiddle_datomic_browser_demo` into your source path.
 4. Adapt the client and server entrypoints you've got from the starter app so they match `src-dev/dev.cljc` from this repo. They only differ slightly.
+
+## Running on a local Dynamo DB
+
+```shell
+./datomic_fixtures_mbrainz_small_ddb.sh
+./run_datomic_ddb.sh
+AWS_ACCESS_KEY_ID=dummy AWS_SECRET_ACCESS_KEY=dummy clj -X:dev:ddb dev/-main :datomic-uri '"'datomic:ddb-local://localhost:8000/datomic/*'"'
+```
