@@ -1,5 +1,5 @@
 {:deps    {org.clojure/clojure {:mvn/version "1.12.3"}
-           com.hyperfiddle/hyperfiddle {:mvn/version "v0-alpha-8834e77c"}
+           com.hyperfiddle/hyperfiddle {:mvn/version "v0-alpha-299dfad6"}
            com.datomic/peer {:mvn/version "1.0.7075"}
            ring/ring {:mvn/version "1.15.3"} ; to serve the app
            ch.qos.logback/logback-classic {:mvn/version "1.4.14"}
