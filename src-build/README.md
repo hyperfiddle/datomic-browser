@@ -42,5 +42,5 @@ fly deploy --remote-only --build-arg VERSION=$(git rev-parse HEAD)
 ```shell
 ./datomic_fixtures_mbrainz_small_ddb.sh
 ./run_datomic_ddb.sh
-AWS_ACCESS_KEY_ID=dummy AWS_SECRET_ACCESS_KEY=dummy clj -X:dev dev/-main :datomic-uri '"'datomic:ddb-local://localhost:8000/datomic/*'"'
+AWS_ACCESS_KEY_ID=dummy AWS_SECRET_ACCESS_KEY=dummy clj -X:dev dev/-main :datomic-uri '"datomic:ddb-local://localhost:8000/datomic/*"'
 ```
