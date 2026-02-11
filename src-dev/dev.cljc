@@ -23,6 +23,7 @@
      (let [{:keys [datomic-uri http-port]} (first args)
            http-port (or http-port (next-available-port-from 8080))
            datomic-uri (or datomic-uri "datomic:dev://localhost:4334/*")] ; dev only default
+       (println "Starting with datomic-uri: " datomic-uri)
        (assert (some? datomic-uri) "Missing `:datomic-uri`. See README.md")
        (assert (string? datomic-uri) "Invalid `:datomic-uri`. See README.md")
        (assert (= "*" (datomic-uri-db-name datomic-uri)) "`:datomic-uri`. Must be a transactor URI (must ends with \"/*\")")

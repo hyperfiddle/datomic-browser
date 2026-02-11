@@ -2,13 +2,13 @@
            com.hyperfiddle/hyperfiddle {:mvn/version "v0-alpha-299dfad6"}
            ring/ring {:mvn/version "1.15.3"} ; to serve the app
 
-           com.datomic/peer {:mvn/version "1.0.7075"}
+           com.datomic/peer {:mvn/version "1.0.7469"}
            com.amazonaws/aws-java-sdk-dynamodb {:mvn/version "1.12.564"} ; `datomic:ddb://`
            org.postgresql/postgresql {:mvn/version "42.7.9"}  ; `datomic:sql://`
            com.mysql/mysql-connector-j {:mvn/version "9.5.0" ; `datomic:sql://`
                                         :exclusions [com.google.protobuf/protobuf-java]} ; conflicts with protobuf bundled in hyperfiddle > electric > closure-compiler-unshaded
+           ;; com.h2database/h2 {:mvn/version "2.1.214"} ; `datomic:sql://` – com.datomic/peer already includes it and pins to 2.1.214
            com.datastax.oss/java-driver-core-shaded {:mvn/version "4.17.0"} ; `datomic:cass3://`
-           ;; H2 support already provided by `com.datomic/peer`
 
            ch.qos.logback/logback-classic {:mvn/version "1.4.14"}
            }
@@ -23,7 +23,7 @@
            {:extra-paths ["src-build"]
             :ns-default  build
             :extra-deps  {thheller/shadow-cljs          {:mvn/version "2.26.2"}
-                          com.datomic/peer {:mvn/version "1.0.7075"}
+                          com.datomic/peer {:mvn/version "1.0.7469"}
                           io.github.clojure/tools.build {:mvn/version "0.10.8"}}}
            :jetty9 {:override-deps {ring/ring {:mvn/version "1.9.6"}}
                     :extra-deps    {ring/ring-jetty-adapter                       {:mvn/version "1.8.2"}
