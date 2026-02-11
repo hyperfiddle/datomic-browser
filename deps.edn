@@ -1,8 +1,15 @@
 {:deps    {org.clojure/clojure {:mvn/version "1.12.3"}
            com.hyperfiddle/hyperfiddle {:mvn/version "v0-alpha-299dfad6"}
-           com.datomic/peer {:mvn/version "1.0.7075"}
-           com.amazonaws/aws-java-sdk-dynamodb {:mvn/version "1.12.564"} ; support for `datomic:ddb` URLs
            ring/ring {:mvn/version "1.15.3"} ; to serve the app
+
+           com.datomic/peer {:mvn/version "1.0.7075"}
+           com.amazonaws/aws-java-sdk-dynamodb {:mvn/version "1.12.564"} ; `datomic:ddb://`
+           org.postgresql/postgresql {:mvn/version "42.7.9"}  ; `datomic:sql://`
+           com.mysql/mysql-connector-j {:mvn/version "9.5.0" ; `datomic:sql://`
+                                        :exclusions [com.google.protobuf/protobuf-java]} ; conflicts with protobuf bundled in hyperfiddle > electric > closure-compiler-unshaded
+           com.datastax.oss/java-driver-core-shaded {:mvn/version "4.17.0"} ; `datomic:cass3://`
+           ;; H2 support already provided by `com.datomic/peer`
+
            ch.qos.logback/logback-classic {:mvn/version "1.4.14"}
            }
  :paths   ["src" "resources"]
