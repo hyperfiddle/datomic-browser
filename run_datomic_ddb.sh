@@ -4,7 +4,7 @@
 # Run ./datomic_fixtures_mbrainz_small_ddb.sh first to load sample data.
 #
 # Then start datomic-browser with:
-#   AWS_ACCESS_KEY_ID=dummy AWS_SECRET_ACCESS_KEY=dummy clj -X:dev:ddb dev/-main :datomic-uri '"'datomic:ddb-local://localhost:8000/datomic/*'"'
+#   AWS_ACCESS_KEY_ID=dummy AWS_SECRET_ACCESS_KEY=dummy clj -X:dev dev/-main :datomic-uri '"'datomic:ddb-local://localhost:8000/datomic/*'"'
 #
 # Cleanup:
 #   docker rm -f dynamodb-local
