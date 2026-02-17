@@ -2,7 +2,7 @@
            com.hyperfiddle/hyperfiddle {:mvn/version "v0-alpha-88bd1de3"}
            ring/ring {:mvn/version "1.15.3"} ; to serve the app
 
-           com.datomic/peer {:mvn/version "1.0.7469"}
+           com.datomic/peer {:mvn/version "1.0.7491"}
            com.amazonaws/aws-java-sdk-dynamodb {:mvn/version "1.12.564"} ; `datomic:ddb://`
            org.postgresql/postgresql {:mvn/version "42.7.9"}  ; `datomic:sql://`
            com.mysql/mysql-connector-j {:mvn/version "9.5.0" ; `datomic:sql://`
@@ -23,7 +23,7 @@
            {:extra-paths ["src-build"]
             :ns-default  build
             :extra-deps  {thheller/shadow-cljs          {:mvn/version "2.26.2"}
-                          com.datomic/peer {:mvn/version "1.0.7469"}
+                          com.datomic/peer {:mvn/version "1.0.7491"}
                           io.github.clojure/tools.build {:mvn/version "0.10.8"}}}
            :jetty9 {:override-deps {ring/ring {:mvn/version "1.9.6"}}
                     :extra-deps    {ring/ring-jetty-adapter                       {:mvn/version "1.8.2"}
