@@ -1,4 +1,3 @@
-resources/public/electric_starter_app/js
 target/
 .cpcache
-.shadow-cljs
+state/

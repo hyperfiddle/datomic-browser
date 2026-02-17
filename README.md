@@ -49,12 +49,12 @@ cd datomic-browser
 ./datomic_fixtures_mbrainz_small.sh       # Download Datomic w/ mbrainz dataset
 #./datomic_fixtures_mbrainz_full.sh       # optional
 ./run_datomic.sh
-clj -X:dev dev/-main
-# Please login with any email to activate automatically: ...
-# INFO  dev: 👉 http://0.0.0.0:8080
+clj -A:dev -M -m datomic-browser.main
+# Browse databases: http://datomic.localhost:8080
+# Admin dashboard:  http://admin.localhost:8080
 
 # boot with Datomic transactor URI
-clj -X:dev dev/-main :datomic-uri '"datomic:dev://localhost:4334/*"'
+clj -A:dev -M -m datomic-browser.main datomic-uri 'datomic:dev://localhost:4334/*'
 ```
 
 Repl: jack-in with `:dev` alias, then eval `(dev/-main)`
