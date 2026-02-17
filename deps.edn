@@ -12,7 +12,8 @@
            ch.qos.logback/logback-classic {:mvn/version "1.4.14"}}
  :paths   ["src" "resources"]
  :aliases {:dev {:extra-paths ["src-dev"]}
-           :private {:override-deps
+           :prod {:extra-paths ["src-prod"]}
+           :local {:override-deps
                      {com.hyperfiddle/hyperfiddle       {:local/root "../hyperfiddle"}
                       com.hyperfiddle/hyperfiddle-agent {:local/root "../hyperfiddle-agent"}}}
            :build {:extra-paths ["src-build"]

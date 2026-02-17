@@ -15,6 +15,7 @@ COPY deps.edn deps.edn
 RUN clojure -M -e ::ok              # preload deps
 RUN clojure -A:build -M -e ::ok     # preload build deps
 COPY src src
+COPY src-prod src-prod
 COPY src-build src-build
 COPY resources resources
 RUN clojure -X:build uberjar :build/jar-name '"app.jar"'
