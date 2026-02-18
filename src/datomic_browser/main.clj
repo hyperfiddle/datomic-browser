@@ -11,47 +11,7 @@
             [hyperfiddle.cloud-proxy :as proxy]
             [hyperfiddle.navigator-agent :as agent]
             [hyperfiddle.nav-cloud-agents :as nav-cloud-agents]
-            [hyperfiddle.navigator6.rendering :as rendering]
-            [hyperfiddle.hfql2 :refer [hfql]]
-            [dustingetz.nav-datomic :as nav]
-            [dustingetz.datomic-contrib2 :as dx]
-            [dustingetz.str :refer [pprint-str]]
-            [datomic.api :as d]))
-
-(defn make-datomic-sitemap
-  "Build the merged sitemap for multi-database Datomic browsing.
-   The databases page links through Inject to attributes."
-  []
-  (merge (dissoc nav/rich-sitemap 'databases)
-    {'databases (hfql {(nav/databases)
-                       {* [^{:hyperfiddle.hfql2/link ['.. [`(~'Inject ~'%v) 'attributes]]}
-                           nav/db-name
-                           d/db-stats]}})}))
-
-(defn make-setup-fn
-  "Create the multi-arity setup-fn for dependency injection.
-   Zero-arity:  static bindings for root (URI, security flag, rendering config).
-   One-arity:   called per Inject route segment with db-name from URL."
-  [datomic-uri]
-  (fn
-    ([] ;; Static bindings — always active on every page
-     {#'nav/*uri* datomic-uri
-      #'nav/*allow-listing-and-browsing-all-dbs* true
-      #'rendering/*server-pretty
-      {datomic.query.EntityMap
-       (fn [entity] (str "EntityMap[" (dx/best-human-friendly-identity entity) "]"))}
-      #'rendering/*tooltip-fn*
-      (fn [_entity _edge value]
-        (pprint-str (into {} (d/touch value)) :print-length 10 :print-level 2))})
-    ([db-name] ;; Called when route has (Inject "mbrainz-full")
-     (let [uri (dx/set-db-name-in-datomic-uri datomic-uri db-name)
-           conn (d/connect uri)
-           db (d/db conn)]
-       {#'nav/*uri*      uri
-        #'nav/*db-name*  db-name
-        #'nav/*conn*     conn
-        #'nav/*db*       db
-        #'nav/*db-stats* (d/db-stats db)}))))
+            [dustingetz.nav-datomic :as nav]))
 
 (defn -main
   "Entrypoint. Starts cloud proxy + auto-connects datomic agent.
@@ -73,8 +33,8 @@
     ;; 3. Auto-connect datomic agent
     (def datomic-agent
       (agent/connect! (str "ws://localhost:" port "/agent?id=datomic")
-        (make-datomic-sitemap)
-        (make-setup-fn datomic-uri)))
+        nav/rich-sitemap
+        (nav/make-setup-fn datomic-uri)))
 
     (.addShutdownHook (Runtime/getRuntime)
       (Thread. (fn []
