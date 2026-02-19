@@ -298,7 +298,8 @@
        (fn [entity] (str "EntityMap[" (dx/best-human-friendly-identity entity) "]"))}
       #'rendering/*tooltip-fn*
       (fn [_entity _edge value]
-        (pprint-str (into {} (d/touch value)) :print-length 10 :print-level 2))})
+        (when (instance? datomic.Entity value)
+          (pprint-str (into {} (d/touch value)) :print-length 10 :print-level 2)))})
     ([db-name] ;; Called when route has (Inject "mbrainz-full")
      (let [uri (dx/set-db-name-in-datomic-uri datomic-uri db-name)
            conn (d/connect uri)
@@ -313,50 +314,14 @@
   ;; ── Demo: connect an agent with datomic browsing ──────────────
   (require '[clojure.repl.deps :refer [add-libs]])
   (add-libs '{com.datomic/peer {:mvn/version "1.0.7491"}})
-  (require
-    '[hyperfiddle.navigator-agent :as agent]
-    '[hyperfiddle.navigator6.rendering :as rendering]
-    '[dustingetz.str :refer [pprint-str]])
   (d/get-database-names "datomic:dev://localhost:4334/*")
+  (require '[hyperfiddle.navigator-agent :as agent])
+  (def proxy-uri "wss://dgetz-datomic.clojure.net/agent" #_"ws://a.localhost:9090/agent")
 
-  (def conn (d/connect "datomic:dev://localhost:4334/mbrainz-full"))
-  (def my-agent
-    (agent/connect! "ws://a.localhost:9090/agent"
-      dustingetz.nav-datomic/rich-sitemap
-      (fn []
-        {#'dustingetz.nav-datomic/*db*       (d/db conn)
-         #'dustingetz.nav-datomic/*conn*     conn
-         #'dustingetz.nav-datomic/*db-stats* (d/db-stats (d/db conn))
-         #'rendering/*server-pretty {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (dx/best-human-friendly-identity entity) "]"))}
-         #'rendering/*tooltip-fn* (fn [entity edge value] (pprint-str (into {} (d/touch value)) :print-length 10 :print-level 2))})))
+  ;; Single-database — connect to specific db
+  (def my-agent (agent/connect! proxy-uri rich-sitemap (make-setup-fn "datomic:dev://localhost:4334/mbrainz-full")))
 
   ;; Dynamic — multi-database with Inject route segment
-  (def base-uri "datomic:dev://localhost:4334/*")
-  (def my-agent
-    (agent/connect! "ws://a.localhost:9090/agent"
-      ;; Sitemap — databases page links through Inject to attributes
-      (merge (dissoc dustingetz.nav-datomic/rich-sitemap 'databases)
-        {'databases (hfql {(databases)
-                           {* [^{::hfql/link ['.. [`(~'Inject ~'%v) 'attributes]]}
-                               db-name
-                               d/db-stats]}})})
-      (fn
-        ([] ;; Static bindings — always active on every page
-         {#'dustingetz.nav-datomic/*uri* base-uri
-          #'dustingetz.nav-datomic/*allow-listing-and-browsing-all-dbs* true
-          #'rendering/*server-pretty {datomic.query.EntityMap (fn [entity] (str "EntityMap[" (dx/best-human-friendly-identity entity) "]"))}
-          #'rendering/*tooltip-fn* (fn [entity edge value] (pprint-str (into {} (d/touch value)) :print-length 10 :print-level 2))})
-        ([db-name] ;; Called when route has (Inject "mbrainz-full")
-         (let [uri (dx/set-db-name-in-datomic-uri base-uri db-name)
-               conn (d/connect uri)
-               db (d/db conn)]
-           {#'dustingetz.nav-datomic/*uri*      uri
-            #'dustingetz.nav-datomic/*db-name*  db-name
-            #'dustingetz.nav-datomic/*conn*     conn
-            #'dustingetz.nav-datomic/*db*       db
-            #'dustingetz.nav-datomic/*db-stats* (d/db-stats db)})))))
-
-  ;; Browse at http://a.localhost:9090
-  ;; Navigate to attributes → click attribute → entities → click entity → traverse refs
+  (def my-agent (agent/connect! proxy-uri rich-sitemap (make-setup-fn "datomic:dev://localhost:4334/*")))
 
   (agent/disconnect! my-agent))
