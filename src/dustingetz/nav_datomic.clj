@@ -310,18 +310,3 @@
         #'*db*       db
         #'*db-stats* (d/db-stats db)}))))
 
-(comment
-  ;; ── Demo: connect an agent with datomic browsing ──────────────
-  (require '[clojure.repl.deps :refer [add-libs]])
-  (add-libs '{com.datomic/peer {:mvn/version "1.0.7491"}})
-  (d/get-database-names "datomic:dev://localhost:4334/*")
-  (require '[hyperfiddle.navigator-agent :as agent])
-  (def proxy-uri "wss://dgetz-datomic.clojure.net/agent" #_"ws://a.localhost:9090/agent")
-
-  ;; Single-database — connect to specific db
-  (def my-agent (agent/connect! proxy-uri rich-sitemap (make-setup-fn "datomic:dev://localhost:4334/mbrainz-full")))
-
-  ;; Dynamic — multi-database with Inject route segment
-  (def my-agent (agent/connect! proxy-uri rich-sitemap (make-setup-fn "datomic:dev://localhost:4334/*")))
-
-  (agent/disconnect! my-agent))
