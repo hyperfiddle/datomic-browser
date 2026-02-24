@@ -49,8 +49,8 @@
         (hfql/navigable (fn [_index db-name] (hfql-resolve `(d/db ~db-name))))))))
 
 (defn attributes
-  "Datomic schema, with Datomic query diagnostics"
-  ([] (attributes (check *db*)))
+  "Datomic schema, with Datomic query diagnostics. Hack: returns nil when *db* not bound, todo improve exception reporting."
+  ([] (when *db* (attributes (check *db*))))
   ([db]
    (let [x (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [db]
                       :io-context ::attributes, :query-stats ::attributes})
