@@ -11,4 +11,4 @@
 (defn -main [& {:strs [datomic-uri http-port]}]
   (let [port (or (some-> http-port parse-long) 8080)
         datomic-uri (or datomic-uri "datomic:dev://localhost:4334/*")]
-    (agent/serve! nav/rich-sitemap (nav/make-setup-fn datomic-uri) :port port)))
+    (agent/serve! nav/sitemap (nav/make-setup-fn datomic-uri) :port port)))

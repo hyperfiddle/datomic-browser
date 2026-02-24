@@ -1,6 +1,6 @@
 (ns dustingetz.nav-datomic
   "Pure Clojure layer for Datomic navigation — query functions, protocol
-   extensions, resolvers, and a stripped sitemap. No Electric dependencies.
+   extensions, resolvers, and sitemap. No Electric dependencies.
 
    Three-layer architecture:
      datomic_contrib2.clj — stateless fns, EntityMap protocol extensions
@@ -168,64 +168,14 @@
 (defmethod -hfql-resolve `d/since [[_ db t]] (d/since (hfql-resolve db) t))
 (defmethod -hfql-resolve `d/as-of [[_ db t]] (d/as-of (hfql-resolve db) t))
 
-;; ── Sitemap (stripped — no Electric tooltips/renderers) ───────────
-
-(def sitemap
-  {'databases
-   (hfql {(databases) {* [db-name d/db-stats]}})
-
-   'attributes
-   (hfql {(attributes)
-          {* [^{::hfql/link '(attribute-detail %)}
-              #(:db/ident %)
-              attribute-count
-              summarize-attr*]}})
-
-   'attribute-entity-detail
-   (hfql {attribute-entity-detail
-          [#(:db/id %)
-           attribute-count
-           summarize-attr*
-           *]})
-
-   'attribute-detail
-   (hfql {attribute-detail
-          {* [^{::hfql/link '(entity-detail %)}
-              #(:db/id %)]}})
-
-   'tx-detail
-   (hfql {tx-detail
-          {* [^{::hfql/link '(entity-detail :e)}
-              #(:e %)
-              ^{::hfql/link '(attribute-detail :a)
-                ::hfql/label :db/ident}
-              {:a :db/ident}
-              :v]}})
-
-   'entity-detail
-   (hfql {entity-detail
-          [#(:db/id %)
-           *]})
-
-   'entity-history
-   (hfql {entity-history
-          {* [^{::hfql/link '(entity-detail :e)}
-              #(:e %)
-              ^{::hfql/link '(attribute-detail :a)}
-              {:a :db/ident}
-              :v
-              ^{::hfql/link '(tx-detail %v)}
-              #(:tx %)
-              :added]}})})
-
-;; ── Rich sitemap (with generic tooltip callbacks) ───────────────
-;; Same routes as `sitemap` but with ::hfql/Tooltip metadata pointing to
-;; FnTooltip in hyperfiddle.navigator6.rendering. Agents bind *tooltip-fn*
+;; ── Sitemap ──────────────────────────────────────────────────────
+;; Routes with ::hfql/Tooltip metadata pointing to FnTooltip in
+;; hyperfiddle.navigator6.rendering. Agents bind *tooltip-fn*
 ;; in e/*bindings* to provide the tooltip implementation.
 ;; TODO: ColumnHeaderTooltip and Render need factory syntax in HFQL analyzer
 ;; to avoid brittle global bindings — backlogged.
 
-(def rich-sitemap
+(def sitemap
   {'databases
    (hfql {(databases) {* [^{::hfql/link ['. [`(~'Inject ~'%v) 'attributes]]}
                            db-name d/db-stats]}})
