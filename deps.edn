@@ -14,6 +14,7 @@
  :aliases {:dev {:extra-paths ["src-dev"]}
            :prod {:extra-paths ["src-prod"]}
            :local {:override-deps {com.hyperfiddle/electric            {:local/root "../electric"}
+                                   com.hyperfiddle/hyperfiddle         {:local/root "../hyperfiddle"}
                                    com.hyperfiddle/hyperfiddle-contrib {:local/root "../hyperfiddle-contrib"}
                                    com.hyperfiddle/hyperfiddle-agent   {:local/root "../hyperfiddle-agent"}}}
            :build {:extra-paths ["src-build"]
