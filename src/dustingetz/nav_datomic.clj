@@ -50,7 +50,7 @@
 
 (defn attributes
   "Datomic schema, with Datomic query diagnostics. Hack: returns nil when *db* not bound, todo improve exception reporting."
-  ([] (when *db* (attributes (check *db*))))
+  ([] (attributes (check *db*)))
   ([db]
    (let [x (d/query {:query '[:find [?e ...] :in $ :where [?e :db/valueType]] :args [db]
                       :io-context ::attributes, :query-stats ::attributes})
