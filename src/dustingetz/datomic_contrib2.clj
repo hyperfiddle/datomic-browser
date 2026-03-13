@@ -1,6 +1,6 @@
 (ns dustingetz.datomic-contrib2
   (:import (datomic.query EntityMap))
-  (:require [contrib.data :refer [index-by unqualify]]
+  (:require [dustingetz.data :refer [index-by unqualify]]
             [clojure.template :refer [apply-template]]
             [datomic.api :as d] ; onprem only
             #_[hyperfiddle.electric :as e] ; no electric allowed to maximize reuse
@@ -86,7 +86,7 @@
 
 (defn back-references [db eid] ; optimized for speed – returns a map {:reverse/_ref #{entity entity ...}
   (as-> (reverse-refs db eid) % ; return eduction of vector pairs
-    (contrib.data/group-by
+    (dustingetz.data/group-by
       #(get % 0) ; fast `first`
       (fn [coll x] (conj! (or coll (transient #{})) (d/entity db (get x 1)))) ; fast `second`
       %)

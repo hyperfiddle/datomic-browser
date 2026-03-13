@@ -8,8 +8,8 @@
      datomic_browser2.cljc — Electric UI: tooltips, renderers, entrypoints"
   (:require
    [clojure.string :as str]
-   [contrib.assert :refer [check]]
-   [contrib.data :refer [get-with-residual-meta]]
+   [dustingetz.check :refer [check]]
+   [dustingetz.data :refer [get-with-residual-meta]]
    [datomic.api :as d]
    [datomic.lucene]
    [dustingetz.datomic-contrib2 :as dx] ; side-effect: extends EntityMap
