@@ -1,11 +1,14 @@
 (ns dustingetz.datomic-contrib2
-  (:import (datomic.query EntityMap))
-  (:require [dustingetz.data :refer [index-by unqualify]]
+  (:import (datomic.query EntityMap)
+           (datomic.db Db))
+  (:require [clojure.set :as set]
+            [clojure.string :as str]
+            [dustingetz.data :refer [index-by unqualify realize]]
             [clojure.template :refer [apply-template]]
             [datomic.api :as d] ; onprem only
             #_[hyperfiddle.electric :as e] ; no electric allowed to maximize reuse
             [hyperfiddle.hfql2 :as hfql]
-            [hyperfiddle.hfql2.protocols :refer [Identifiable Suggestable Navigable ComparableRepresentation]]
+            [hyperfiddle.hfql2.protocols :as hfqlp :refer [Identifiable Suggestable Navigable ComparableRepresentation]]
             [hyperfiddle.rcf :refer [tests % tap]]))
 
 (tests (require '[clojure.datafy :refer [datafy nav]]
@@ -147,6 +150,207 @@
 (defn best-human-friendly-identity [!e]
   ; requires application dynamic injection, is this fn a real thing?
   (or #_(best-domain-level-human-friendly-identity entity) (:db/ident !e) (:db/id !e)))
+
+;; ── Datalog d/query analysis ────────────────────────────────────
+;; Parse Datalog :find specs, detect identity columns from schema,
+;; reshape flat d/query tuples into named maps with navigable links.
+
+(defn- datalog-var?
+  "True if x is a Datalog logic variable (symbol starting with ?)."
+  [x]
+  (and (symbol? x) (str/starts-with? (name x) "?")))
+
+(defn- normalize-datalog-query
+  "Normalize a Datalog query (vector or map form) to {:find ... :in ... :where ...}."
+  [query]
+  (let [q (if (and (map? query) (:query query)) (:query query) query)]
+    (if (map? q) q
+      ;; Vector form — split at keyword boundaries
+      (->> (partition-by keyword? q)
+           (partition 2)
+           (reduce (fn [m [[k] clauses]] (assoc m k (vec clauses))) {})))))
+
+(defn- datalog-identity-bindings
+  "Return the set of :find variables that resolve to entity identities.
+   A var is identity if it's in entity position of a [e a v] data pattern,
+   or in value position where a is :db.unique/identity in the schema."
+  [query unique-identity?]
+  (letfn [(find-vars [find-spec]
+            ;; Extract logic vars from :find spec. Handles relation, collection,
+            ;; tuple, scalar, pull, and aggregate forms.
+            (let [elements (if (and (= 1 (count find-spec)) (vector? (first find-spec)))
+                             (first find-spec)
+                             find-spec)]
+              (->> elements
+                   (remove #{'... '.})
+                   (mapcat (fn [x]
+                             (cond
+                               (datalog-var? x) [x]
+                               (seq? x) (filter datalog-var? x)
+                               :else [])))
+                   set)))
+          (walk-where [clauses]
+            ;; Walk :where clauses, collecting vars in entity position or
+            ;; unique-identity value position. Recurses into nested clauses.
+            (reduce
+              (fn [ids clause]
+                (cond
+                  ;; Data pattern: [e a ...], 2+ elements, first isn't a fn call.
+                  (and (vector? clause)
+                       (>= (count clause) 2)
+                       (not (list? (first clause))))
+                  (let [[e a v] clause]
+                    (cond-> ids
+                      (datalog-var? e) (conj e)
+                      (and (some? v)
+                           (datalog-var? v)
+                           (keyword? a)
+                           (unique-identity? a)) (conj v)))
+                  ;; Nested clause (not, or, rules, etc.): recurse
+                  (sequential? clause)
+                  (into ids (walk-where (filter sequential? (rest clause))))
+                  :else ids))
+              #{}
+              clauses))]
+    (let [q (normalize-datalog-query query)]
+      (set/intersection (find-vars (:find q))
+                        (walk-where (:where q))))))
+
+(defn- reshape-datalog-query-result
+  "Transform raw d/query result into maps keyed by find-spec variable symbols.
+   HFQL's map rendering uses map keys as column headers. Identity columns carry
+   hfqlp/-identify metadata so the navigator renders them as navigable links."
+  [raw-ret find-spec where-clauses id-keys]
+  (letfn [(element->key [element]
+            ;; Bare variables stay as symbols. Aggregates keep their list form
+            ;; (native EDN, survives URL serialization). Realize lazy seqs so
+            ;; they print readably in column headers.
+            (cond
+              (datalog-var? element) element
+              (seq? element) (realize element)
+              :else element))
+          (find-type [find-spec]
+            ;; Classify the :find spec shape for result destructuring.
+            (cond
+              (and (= 1 (count find-spec)) (vector? (first find-spec)))
+              (if (= '... (last (first find-spec))) :collection :tuple)
+              (= '. (last find-spec)) :scalar
+              :else :relation))
+          (var-origins [clauses]
+            ;; Map each :find variable to its backing Datomic attribute.
+            ;; Only v-position vars get an origin (the attribute they're bound to).
+            (reduce
+              (fn [origins clause]
+                (cond
+                  (and (vector? clause)
+                       (>= (count clause) 2)
+                       (not (list? (first clause))))
+                  (let [[_e a v] clause]
+                    (cond-> origins
+                      (and (some? v) (datalog-var? v) (keyword? a)) (assoc v a)))
+                  (sequential? clause)
+                  (merge origins (var-origins (filter sequential? (rest clause))))
+                  :else origins))
+              {}
+              clauses))]
+    (let [raw-elements (let [elements (if (and (= 1 (count find-spec)) (vector? (first find-spec)))
+                                        (first find-spec)
+                                        find-spec)]
+                         (vec (remove #{'... '.} elements)))
+          vars (mapv element->key raw-elements)
+          origins (var-origins where-clauses)
+          ;; Enrich keys with metadata:
+          ;; - ::source-attribute for column header tooltips
+          ;; - hfqlp/-identify for identity columns (nav resolves cell values to entities)
+          vars (mapv (fn [v elem]
+                       (let [inner-var (if (datalog-var? elem)
+                                         elem
+                                         (first (filter datalog-var? (flatten elem))))
+                             attr (get origins inner-var)]
+                         (cond-> v
+                           attr (vary-meta assoc ::source-attribute attr)
+                           (contains? id-keys v)
+                           (vary-meta assoc `hfqlp/-identify
+                                      ;; Column declares: cell values are entity IDs,
+                                      ;; identifiable as (d/entity eid).
+                                      (fn [eid] (list `d/entity eid))))))
+                     vars raw-elements)
+          spec-type (find-type find-spec)]
+      (case spec-type
+        :collection (mapv #(array-map (first vars) %) raw-ret)
+        :relation  (mapv #(zipmap vars %) raw-ret)
+        :tuple     [(zipmap vars raw-ret)]
+        :scalar    [(array-map (first vars) raw-ret)]))))
+
+(defn- ^:no-doc stringify-query-stats
+  "Rewrite :io-stats and :query-stats in a d/query result map,
+   stringifying clause forms and binding lists so they render readably.
+   TEMPORARY — drop once UI is more ergonomic on query-stats data shape."
+  [result-map]
+  (letfn [(stringify-val? [k]
+            (#{:clause :binds-in :binds-out :preds :unbound-vars} k))
+          (stringify-nested-each? [k]
+            (#{:sched} k))
+          (stringify-sequential-children? [k]
+            (#{:query} k))
+          (stringify-map [m]
+            (when m
+              (persistent!
+                (reduce-kv
+                  (fn [acc k v]
+                    (assoc! acc k
+                      (cond
+                        (stringify-val? k)  (pr-str v)
+                        (stringify-nested-each? k) (mapv (fn [group] (mapv pr-str group)) v)
+                        (stringify-sequential-children? k)
+                        (mapv (fn [x] (if (sequential? x) (pr-str x) x)) v)
+                        (map? v)                (stringify-map v)
+                        (and (sequential? v)
+                             (every? map? v))   (mapv stringify-map v)
+                        :else                   v)))
+                  (transient {})
+                  m))))]
+    (cond-> result-map
+      (:io-stats result-map)    (update :io-stats stringify-map)
+      (:query-stats result-map) (update :query-stats stringify-map))))
+
+(defn- d-query-implicit-db
+  "Extract the implicit database from a d/query argument map.
+   Convention: the first :args element is bound to `$` (the default db source).
+   Returns nil if :args is absent or first element isn't a Db instance."
+  [query-map]
+  (let [first-arg (first (:args query-map))]
+    (when (instance? Db first-arg) first-arg)))
+
+(defn- datalog-query-identity-keys
+  "Determine which :find variables resolve to entity identities.
+   Requires a database to inspect schema for :db.unique/identity attributes.
+   Returns #{} when no db is available (identity detection skipped gracefully)."
+  [query-map]
+  (if-let [db (d-query-implicit-db query-map)]
+    (datalog-identity-bindings (:query query-map)
+      (fn [attr] (= :db.unique/identity (.unique (d/attribute db attr)))))
+    #{}))
+
+(defn normalize-datalog-query-result
+  "Reshape a raw d/query result into named maps with identity metadata.
+   Parses the :find spec to derive column names, analyzes :where clauses and
+   schema to detect identity columns, preserves io-stats/query-stats as metadata."
+  [query-map raw-d-query-result]
+  (let [;; d/query returns extended map {:ret ... :io-stats ...} or raw result
+        extended?  (map? raw-d-query-result)
+        result     (if extended? (stringify-query-stats raw-d-query-result) raw-d-query-result)
+        raw-ret    (if extended? (:ret result) result)
+        q          (normalize-datalog-query (:query query-map))
+        named-ret  (reshape-datalog-query-result raw-ret (:find q) (:where q)
+                     (datalog-query-identity-keys query-map))
+        residual   (when extended? (dissoc result :ret))]
+    ;; Preserve query metadata (io-stats, query-stats) on the collection
+    (if (and residual (instance? clojure.lang.IObj named-ret))
+      (with-meta named-ret residual)
+      named-ret)))
+
+;; ── Protocol extensions ─────────────────────────────────────────
 
 (extend-type datomic.query.EntityMap
   Identifiable

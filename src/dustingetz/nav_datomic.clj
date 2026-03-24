@@ -7,16 +7,15 @@
      nav_datomic.clj      — dynamic vars, query fns, Datum/Db extensions, resolvers, sitemap
      datomic_browser2.cljc — Electric UI: tooltips, renderers, entrypoints"
   (:require
-   [clojure.set :as set]
    [clojure.string :as str]
    [dustingetz.check :refer [check]]
-   [dustingetz.data :refer [get-with-residual-meta realize]]
+   [dustingetz.data :refer [get-with-residual-meta]]
    [datomic.api :as d]
    [datomic.lucene]
    [dustingetz.datomic-contrib2 :as dx] ; side-effect: extends EntityMap
    [dustingetz.str :refer [blank->nil pprint-str]]
    [hyperfiddle.hfql2 :as hfql :refer [hfql hfql-resolve]]
-   [hyperfiddle.hfql2.protocols :as hfqlp :refer [Identifiable -hfql-resolve Navigable Suggestable ComparableRepresentation]]
+   [hyperfiddle.hfql2.protocols :refer [Identifiable -hfql-resolve Navigable Suggestable ComparableRepresentation]]
    [hyperfiddle.navigator6.rendering :as rendering]
    [hyperfiddle.navigator6.search :refer [*local-search]])
   (:import [datomic.db Datum Db]))
@@ -111,276 +110,6 @@
       (d/datoms history :eavt (:db/id !e !e))
       (d/datoms history :vaet (:db/id !e !e)))))
 
-;; ── d/query analysis & reshaping ────────────────────────────────────
-;; Smart wrapper around d/query: parses the :find spec to derive column
-;; names, analyzes :where clauses + schema to detect identity columns,
-;; reshapes flat tuples into named maps, and preserves query/io stats.
-
-;; -- Stats stringification (TODO: workaround) --
-;; The navigator UI interprets vectors/lists as collections and truncates them.
-;; These fns rewrite :io-stats/:query-stats so clause forms and binding lists
-;; render as readable strings instead of "[?a ...] 3 elements".
-
-(def ^:private stringify-val-keys
-  ;; keys whose values are Datomic forms — pr-str the whole value
-  #{#_:query :clause :binds-in :binds-out :preds :unbound-vars})
-
-(def ^:private stringify-nested-each-keys
-  ;; keys whose values are seqs of clause-groups — pr-str each clause inside each group
-  #{:sched})
-
-(def ^:private stringify-sequential-children-keys
-  ;; keys where we keep the top-level seq navigable but pr-str any sub-sequences
-  ;; e.g. :query — keywords like :find stay, but [?a :attr ?v] and (count ?x) get stringified
-  #{:query})
-
-(defn- stringify-datomic-stats-map [m]
-  (when m
-    (persistent!
-      (reduce-kv
-        (fn [acc k v]
-          (assoc! acc k
-            (cond
-              (stringify-val-keys k)  (pr-str v)
-              ;; sched: list of clause-groups → stringify each clause inside each group
-              (stringify-nested-each-keys k) (mapv (fn [group] (mapv pr-str group)) v)
-              ;; query: keep top-level vec navigable, stringify only sub-sequences
-              (stringify-sequential-children-keys k)
-              (mapv (fn [x] (if (sequential? x) (pr-str x) x)) v)
-              (map? v)                (stringify-datomic-stats-map v)
-              ;; recurse into vectors of maps (e.g. :phases, :clauses)
-              (and (sequential? v)
-                   (every? map? v))   (mapv stringify-datomic-stats-map v)
-              :else                   v)))
-        (transient {})
-        m))))
-
-(defn- stringify-datomic-stats
-  "Rewrite :io-stats and :query-stats in a d/query result map,
-   converting clause forms and binding lists to strings so the
-   navigator UI doesn't truncate them as collections."
-  [result-map]
-  (cond-> result-map
-    (:io-stats result-map)    (update :io-stats stringify-datomic-stats-map)
-    (:query-stats result-map) (update :query-stats stringify-datomic-stats-map)))
-
-;; -- Datalog identity analysis --
-;; Given a Datomic datalog query and schema info, determine which :find
-;; variables resolve to entity identities — so the navigator can render
-;; them as navigable links instead of plain scalars.
-
-(defn- logic-var? [x]
-  (and (symbol? x) (str/starts-with? (name x) "?")))
-
-(defn- normalize-query
-  "Normalize vector-form or d/query-map-form queries to a map
-   with :find, :in, :where keys."
-  [query]
-  ;; Unwrap d/query map form: {:query [...] :args [...]}
-  (let [q (if (and (map? query) (:query query)) (:query query) query)]
-    (if (map? q) q
-      ;; Vector form — split at keyword boundaries
-      (->> (partition-by keyword? q)
-           (partition 2)
-           (reduce (fn [m [[k] clauses]] (assoc m k (vec clauses))) {})))))
-
-(defn- find-spec-vars
-  "Extract logic vars selected in the :find spec.
-   Handles relation, collection, tuple, scalar, pull, and aggregate forms."
-  [find-spec]
-  ;; Unwrap collection/tuple: [[?e ...]] or [[?e ?name]] → inner vector
-  (let [elements (if (and (= 1 (count find-spec)) (vector? (first find-spec)))
-                   (first find-spec)
-                   find-spec)]
-    (->> elements
-         (remove #{'... '.})           ; strip find-spec markers
-         (mapcat (fn [x]
-                   (cond
-                     (logic-var? x) [x]
-                     ;; pull/aggregate: (pull ?e [...]) or (count ?e)
-                     (seq? x) (filter logic-var? x)
-                     :else [])))
-         set)))
-
-(defn- walk-where-clauses
-  "Walk :where clauses, collecting vars that are entity identities.
-   Open walker — recurses into any sequential sub-structure,
-   doesn't hardcode clause type names."
-  [clauses unique-identity?]
-  (reduce
-    (fn [ids clause]
-      (cond
-        ;; Data pattern: [e a ...], 2+ elements, first isn't a fn call.
-        ;; Datomic accepts [e a] (implicit v), [e a v], [e a v tx], [e a v tx added].
-        (and (vector? clause)
-             (>= (count clause) 2)
-             (not (list? (first clause))))
-        (let [[e a v] clause]
-          (cond-> ids
-            (logic-var? e) (conj e)
-            (and (some? v) ; v absent in 2-element patterns
-                 (logic-var? v)
-                 (keyword? a)
-                 (unique-identity? a)) (conj v)))
-
-        ;; Nested clause (not, or, rules, etc.): recurse into sequential children
-        (sequential? clause)
-        (into ids (walk-where-clauses
-                    (filter sequential? (rest clause))
-                    unique-identity?))
-
-        :else ids))
-    #{}
-    clauses))
-
-(defn- db->unique-identity?
-  "Build a unique-identity? predicate from a Datomic db.
-   Uses .unique on AttrInfo (d/attribute returns AttrInfo, not a map)."
-  [db]
-  (fn [attr] (= :db.unique/identity (.unique (d/attribute db attr)))))
-
-(defn- identity-bindings
-  "Given a Datomic datalog query and a unique-identity? predicate,
-   return the set of :find logic variables that resolve to entity identities.
-   A var is identity if it's in entity position of a [e a v] data pattern,
-   or in value position where a is :db.unique/identity in the schema."
-  [query unique-identity?]
-  (let [q (normalize-query query)
-        find-vars (find-spec-vars (:find q))
-        where-ids (walk-where-clauses (:where q) unique-identity?)]
-    (set/intersection find-vars where-ids)))
-
-;; -- Var provenance --
-;; Map each find-spec variable to the Datomic attribute it's bound to
-;; in the :where clauses. Used for column header tooltips.
-
-(defn- var-origins
-  "Walk :where clauses, return {var attr} mapping each variable to its
-   backing Datomic attribute. e-position vars map to :entity."
-  [clauses]
-  (reduce
-    (fn [origins clause]
-      (cond
-        ;; Data pattern: [e a v ...]
-        ;; Only v-position vars get an origin (the attribute they're bound to).
-        ;; e-position vars don't have a meaningful single attribute origin.
-        (and (vector? clause)
-             (>= (count clause) 2)
-             (not (list? (first clause))))
-        (let [[_e a v] clause]
-          (cond-> origins
-            (and (some? v) (logic-var? v) (keyword? a)) (assoc v a)))
-
-        ;; Recurse into nested clauses
-        (sequential? clause)
-        (merge origins (var-origins (filter sequential? (rest clause))))
-
-        :else origins))
-    {}
-    clauses))
-
-;; -- Result reshaping --
-;; Transform raw d/query results into maps keyed by find-spec variable
-;; symbols, so HFQL materializes variable names as column headers.
-
-(defn- find-element->key
-  "Convert a find-spec element to a map key.
-   Bare variables stay as symbols. Aggregates like (count ?release) keep
-   their list form — lists are native EDN and survive URL serialization.
-   (symbol (pr-str ...)) produced symbols whose names looked like lists,
-   breaking EDN roundtrip: the reader parsed them back as lists, not symbols."
-  [element]
-  (cond
-    (logic-var? element) element
-    ;; Aggregate or pull: keep the list form, realized to a proper list.
-    ;; Lazy seqs print as opaque `LazySeq@hash` in column headers;
-    ;; `realize` produces a plain list that prints and serializes correctly.
-    (seq? element) (realize element)
-    :else element))
-
-(defn- find-spec-keys-ordered
-  "Return an ordered vector of map keys for the find-spec elements.
-   Bare vars → symbols, aggregates → symbols named after the expression."
-  [find-spec]
-  (let [elements (if (and (= 1 (count find-spec)) (vector? (first find-spec)))
-                   (first find-spec)
-                   find-spec)]
-    (->> elements
-         (remove #{'... '.})
-         (mapv find-element->key))))
-
-(defn- find-spec-type
-  "Classify the :find spec shape. Determines how to destructure the raw result."
-  [find-spec]
-  (cond
-    ;; [[?e ...]] → collection, [[?e ?name]] → tuple
-    (and (= 1 (count find-spec)) (vector? (first find-spec)))
-    (if (= '... (last (first find-spec))) :collection :tuple)
-    ;; ?e . → scalar
-    (= '. (last find-spec)) :scalar
-    ;; ?e ?name → relation (default)
-    :else :relation))
-
-(defn- reshape-datomic-result
-  "Transform raw Datomic result to vector of maps keyed by find-spec variable symbols.
-   HFQL's map rendering (hfql2.cljc:1144) uses map keys as column headers.
-   Each symbol key carries :origin metadata (backing Datomic attribute) for tooltips.
-   Identity columns (from id-keys) carry hfqlp/-identify metadata — the column key
-   declares how to produce a symbolic identity form from cell values."
-  [raw-ret find-spec where-clauses id-keys]
-  (let [;; Raw find elements before key conversion — needed to resolve inner vars for aggregates
-        raw-elements (let [elements (if (and (= 1 (count find-spec)) (vector? (first find-spec)))
-                                      (first find-spec)
-                                      find-spec)]
-                       (vec (remove #{'... '.} elements)))
-        vars (mapv find-element->key raw-elements)
-        origins (var-origins where-clauses)
-        ;; Enrich symbols with metadata:
-        ;; - ::source-attribute for column header tooltips
-        ;; - hfqlp/-identify for identity columns (teaches nav how to resolve cell values to entities)
-        vars (mapv (fn [v elem]
-                     (let [inner-var (if (logic-var? elem)
-                                       elem
-                                       (first (filter logic-var? (flatten elem))))
-                           attr (get origins inner-var)]
-                       (cond-> v
-                         attr            (vary-meta assoc ::source-attribute attr)
-                         (contains? id-keys v)
-                         (vary-meta assoc `hfqlp/-identify
-                                    ;; Column declares: cell values are entity IDs,
-                                    ;; identifiable as (d/entity eid).
-                                    (fn [eid] (list `d/entity eid))))))
-                   vars raw-elements)
-        spec-type (find-spec-type find-spec)]
-    (case spec-type
-      :collection (mapv #(array-map (first vars) %) raw-ret)
-      :relation  (mapv #(zipmap vars %) raw-ret)
-      :tuple     [(zipmap vars raw-ret)]
-      :scalar    [(array-map (first vars) raw-ret)])))
-
-(defn- d-query
-  "Smart d/query wrapper: named columns, identity detection, stats preservation.
-   Parses the query's :find spec to derive column names, analyzes :where clauses
-   and schema to detect identity columns, reshapes flat tuples into named maps.
-   Called by the -hfql-resolve method for d/query — users don't call this directly."
-  [query-map]
-  (let [raw-result (d/query query-map)
-        ;; d/query returns extended map {:ret ... :io-stats ...} or raw result
-        ;; depending on Datomic version and query form. Normalize both.
-        extended?  (map? raw-result)
-        result     (if extended? (stringify-datomic-stats raw-result) raw-result)
-        raw-ret    (if extended? (:ret result) result)
-        query      (:query query-map)
-        q          (normalize-query query)
-        db         *db*
-        id-keys    (when db (identity-bindings query (db->unique-identity? db)))
-        named-ret  (reshape-datomic-result raw-ret (:find q) (:where q) (or id-keys #{}))
-        residual   (when extended? (dissoc result :ret))]
-    ;; Preserve query metadata (io-stats, query-stats) on the collection
-    (if (and residual (instance? clojure.lang.IObj named-ret))
-      (with-meta named-ret residual)
-      named-ret)))
-
 ;; ── Protocol extensions ───────────────────────────────────────────
 
 (defn- entity-exists? [db eid]
@@ -439,11 +168,10 @@
 (defmethod -hfql-resolve `d/since [[_ db t]] (d/since (hfql-resolve db) t))
 (defmethod -hfql-resolve `d/as-of [[_ db t]] (d/as-of (hfql-resolve db) t))
 
-;; d/query resolver — intercepted by the interpreter's call node dispatch
-;; so users can write (d/query query-map) directly in HFQL sitemaps and get
+;; d/query resolver — users write (d/query query-map) in HFQL sitemaps and get
 ;; named columns, identity-aware navigation, and stats preservation for free.
 (defmethod -hfql-resolve `d/query [[_ query-map]]
-  (d-query query-map))
+  (dx/normalize-datalog-query-result query-map (d/query query-map)))
 
 (defn query-form-defaults
   "Symbolic defaults for the query form. DI refs as symbols (e.g. '*db*) so
