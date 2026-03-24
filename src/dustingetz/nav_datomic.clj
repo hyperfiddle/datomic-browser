@@ -358,10 +358,11 @@
       :tuple     [(zipmap vars raw-ret)]
       :scalar    [(array-map (first vars) raw-ret)])))
 
-(defn d-query
+(defn- d-query
   "Smart d/query wrapper: named columns, identity detection, stats preservation.
    Parses the query's :find spec to derive column names, analyzes :where clauses
-   and schema to detect identity columns, reshapes flat tuples into named maps."
+   and schema to detect identity columns, reshapes flat tuples into named maps.
+   Called by the -hfql-resolve method for d/query — users don't call this directly."
   [query-map]
   (let [raw-result (d/query query-map)
         ;; d/query returns extended map {:ret ... :io-stats ...} or raw result
@@ -438,6 +439,22 @@
 (defmethod -hfql-resolve `d/since [[_ db t]] (d/since (hfql-resolve db) t))
 (defmethod -hfql-resolve `d/as-of [[_ db t]] (d/as-of (hfql-resolve db) t))
 
+;; d/query resolver — intercepted by the interpreter's call node dispatch
+;; so users can write (d/query query-map) directly in HFQL sitemaps and get
+;; named columns, identity-aware navigation, and stats preservation for free.
+(defmethod -hfql-resolve `d/query [[_ query-map]]
+  (d-query query-map))
+
+(defn query-form-defaults
+  "Symbolic defaults for the query form. DI refs as symbols (e.g. '*db*) so
+   the result is serializable for form display. The ::hfql/defaults step
+   (default impl: resolve symbols from dynamic scope) hydrates them."
+  [{:syms [query-map]}]
+  {'query-map (or query-map
+                '{:query [:find [?name ...]
+                          :where [_ :artist/sortName ?name]]
+                  :args  [*db*]})})
+
 ;; ── Sitemap ──────────────────────────────────────────────────────
 ;; Routes with ::hfql/Tooltip metadata pointing to FnTooltip in
 ;; hyperfiddle.navigator6.rendering. Agents bind *tooltip-fn*
@@ -458,6 +475,9 @@
             #(:db/ident %)
             attribute-count
             summarize-attr*]}})
+
+   'query (hfql ^{::hfql/form-defaults query-form-defaults} (d/query query-map))
+
 
    'attribute-entity-detail
    (hfql {attribute-entity-detail ^{::hfql/Tooltip `hyperfiddle.navigator6.rendering/FnTooltip}
