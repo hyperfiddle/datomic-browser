@@ -166,9 +166,11 @@
   (let [q (if (and (map? query) (:query query)) (:query query) query)]
     (if (map? q) q
       ;; Vector form — split at keyword boundaries
-      (->> (partition-by keyword? q)
-           (partition 2)
-           (reduce (fn [m [[k] clauses]] (assoc m k (vec clauses))) {})))))
+      (let [m (->> (partition-by keyword? q)
+                   (partition 2)
+                   (reduce (fn [m [[k] clauses]] (assoc m k (vec clauses))) {}))]
+        (assert (:find m) (str "Datalog query missing :find clause: " (pr-str query)))
+        m))))
 
 (defn- datalog-identity-bindings
   "Return the set of :find variables that resolve to entity identities.
@@ -206,7 +208,10 @@
                            (datalog-var? v)
                            (keyword? a)
                            (unique-identity? a)) (conj v)))
-                  ;; Nested clause (not, or, rules, etc.): recurse
+                  ;; Nested clause (not, or, or-join, not-join, etc.): recurse.
+                  ;; Rule invocations like (my-rule ?e ?other) also match here —
+                  ;; safely, because (filter sequential? (rest clause)) drops the
+                  ;; symbol args, so nothing is recursed into for bare rule calls.
                   (sequential? clause)
                   (into ids (walk-where (filter sequential? (rest clause))))
                   :else ids))

@@ -206,7 +206,6 @@
 
    'query (hfql ^{::hfql/form-defaults query-form-defaults} (d/query query-map))
 
-
    'attribute-entity-detail
    (hfql {attribute-entity-detail ^{::hfql/Tooltip `hyperfiddle.navigator6.rendering/FnTooltip}
           [#(:db/id %)
