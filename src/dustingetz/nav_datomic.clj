@@ -179,9 +179,10 @@
    (default impl: resolve symbols from dynamic scope) hydrates them."
   [{:syms [query-map]}]
   {'query-map (or query-map
-                '{:query [:find [?name ...]
-                          :where [_ :artist/sortName ?name]]
-                  :args  [*db*]})})
+                '{:query [:find ?e ?a :where [?e :db/ident ?a]]
+                  :args  [*db*]
+                  :io-context :user/foo
+                  :query-stats true})})
 
 ;; ── Sitemap ──────────────────────────────────────────────────────
 ;; Routes with ::hfql/Tooltip metadata pointing to FnTooltip in
